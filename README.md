@@ -1,6 +1,6 @@
 # webcam-shader-boilerplate
 
-This is an opinionated starter repo for writing fragment shader code that interacts with webcam input in the browser!
+This is an opinionated starter repo for writing fragment shader code that interacts with microphone input in the browser, to visualize audio!
 
 `npm run start` to start the devserver.
 
