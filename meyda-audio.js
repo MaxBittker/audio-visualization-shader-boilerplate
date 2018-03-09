@@ -15,7 +15,7 @@ module.exports = function(options) {
     var meydaAnalyzer = Meyda.createMeydaAnalyzer({
       audioContext: context, // required
       source: source, // required
-      bufferSize: 512*4, // required
+      bufferSize: 512, // required
       hopSize: 256, // optional
       windowingFunction: "hamming", // optional
       featureExtractors: features, // optional - A string, or an array of strings containing the names of features you wish to extract.

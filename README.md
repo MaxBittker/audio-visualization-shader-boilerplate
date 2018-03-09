@@ -1,10 +1,11 @@
 # webcam-shader-boilerplate
 
-This is an opinionated starter repo for writing fragment shader code that interacts with microphone input in the browser, to visualize audio!
+This is an opinionated starter repo for writing fragment shader code that interacts with microphone input in the browser, to visualize audio! 
 
 `npm run start` to start the devserver.
 
 Annotated dependency list:
+- `meyda`: audio feature extraction library. It works with the Web Audio API (or plain old JavaScript arrays) to expose information about the timbre and perceived qualities of sound.
 
 - `regl`:  Declarative wrapper over WebGL state machine. A regl command is analogous to a react component. We have a single command, `drawTriangle`.
 

@@ -1,11 +1,13 @@
 import { setupOverlay } from "regl-shader-error-overlay";
+import _ from 'lodash';
 setupOverlay();
 
-const regl = require("regl")({ pixelRatio: 1 });
+const regl = require("regl")({ pixelRatio: 2 });
 const wc = require("./regl-webcam");
 const audioAnalyzer = require("./meyda-audio");
 
 let fsh = require("./fragment.glsl");
+let vsh = require("./vertex.glsl");
 
 const lastFrame = regl.texture();
 const pixels = regl.texture();
@@ -14,12 +16,16 @@ let audioVisualization = (audio, {}) => {
     frag: fsh,
     uniforms: {
       // webcam,
+      rms: ()=>audio.get("rms"),
       spectrum: () =>
         regl.texture({
-          width: 64*4,
+          width: audio.get("powerSpectrum").length,
           height: 1,
           data: new Uint8Array(
-            audio.get("powerSpectrum").map(i=>i*256)
+            _.flatMap(
+              _.reverse(audio.get("powerSpectrum")),
+              i=>[i*256,i*256,i*256,i*256]
+            )
           )
         }),
       // videoResolution: [videoWidth, videoHeight],
@@ -37,16 +43,7 @@ let audioVisualization = (audio, {}) => {
     /*
 Attributes you don't need to modify if you just want to write full bleed fragment shaders:
 */
-    vert: `
-// boring "pass-through" vertex shader
-precision mediump float;
-attribute vec2 position;
-varying vec2 uv;
-
-void main () {
-  uv = position;
-  gl_Position = vec4(position, 0, 1);
-}`,
+    vert: vsh,
     attributes: {
       // Full screen triangle
       position: [[-1, 4], [-1, -1], [4, -1]]

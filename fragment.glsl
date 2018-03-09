@@ -2,7 +2,7 @@ precision mediump float;
 uniform float t;
 uniform vec2 resolution;
 uniform sampler2D backBuffer;
-#define FFT_SIZE 256
+uniform float rms;
 uniform sampler2D spectrum;
 
 // uniform sampler2D webcam;
@@ -13,6 +13,8 @@ varying vec2 uv;
 // clang-format off
 #pragma glslify: hsv2rgb = require('glsl-hsv2rgb')
 #pragma glslify: luma = require(glsl-luma)
+#pragma glslify: noise = require('glsl-noise/simplex/3d')
+
 // clang-format on
 vec2 pixel = vec2(1.0) / resolution;
 
@@ -36,12 +38,10 @@ void main() {
   polar.x /= 6.28318530718;
   polar.x = 1.0 - polar.x;
   
-  // if (polar.y < 0. - pixel.y * 3.) {
-  
-    color = texture2D(spectrum, polar.yx).rgb;
-    if(length(color)<0.1){
+    color = hsv2rgb(vec3(1.0,0.2,1.0)) *texture2D(spectrum, polar.yx).y;
+    if(length(color)<0.05){
     vec2 textCoord = uv * 0.5 + vec2(0.5);
-    color = texture2D(backBuffer, textCoord + vec2(0, 1.0) * 2.*pixel).rgb * 0.999;
+    color = texture2D(backBuffer, textCoord + vec2(0, 1.0) * 500.*rms* pixel * noise(vec3(uv,t))).rgb * 0.995;
   }
     // color = vec3(1.0) * polar.y;
   gl_FragColor = vec4(color, 1.0);
