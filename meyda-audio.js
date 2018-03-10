@@ -1,7 +1,11 @@
 const getUserMedia = require("getusermedia");
 const Meyda = require("meyda");
 
-module.exports = function(options) {
+const timeDomainFeatures = ["rms", "energy", "zcr"];
+
+const spectralFeatures = ["powerSpectrum", "amplitudeSpectrum","buffer", "spectralCentroid", "spectralFlatness"];
+
+function audioAnalyzer(options) {
   const regl = options.regl;
   getUserMedia({ audio: true }, function(err, stream) {
     if (err) {
@@ -11,7 +15,7 @@ module.exports = function(options) {
 
     var context = new AudioContext();
     var source = context.createMediaStreamSource(stream);
-    let features = ["rms", "powerSpectrum"];
+    let features = [...timeDomainFeatures, ...spectralFeatures];
     var meydaAnalyzer = Meyda.createMeydaAnalyzer({
       audioContext: context, // required
       source: source, // required
@@ -26,3 +30,5 @@ module.exports = function(options) {
     options.done(meydaAnalyzer, {});
   });
 };
+
+export {audioAnalyzer, timeDomainFeatures, spectralFeatures}

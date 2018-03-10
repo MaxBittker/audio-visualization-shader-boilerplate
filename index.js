@@ -4,7 +4,7 @@ setupOverlay();
 
 const regl = require("regl")({ pixelRatio: 2 });
 const wc = require("./regl-webcam");
-const audioAnalyzer = require("./meyda-audio");
+const {audioAnalyzer, timeDomainFeatures, spectralFeatures} = require("./meyda-audio");
 
 let fsh = require("./fragment.glsl");
 let vsh = require("./vertex.glsl");
@@ -17,14 +17,24 @@ let audioVisualization = (audio, {}) => {
     uniforms: {
       // webcam,
       rms: ()=>audio.get("rms"),
+      energy: ()=>audio.get("energy"),
+      zcr: ()=>audio.get("zcr"),
+      
       spectrum: () =>
         regl.texture({
           width: audio.get("powerSpectrum").length,
           height: 1,
           data: new Uint8Array(
-            _.flatMap(
-              _.reverse(audio.get("powerSpectrum")),
-              i=>[i*256,i*256,i*256,i*256]
+            _.map(
+            _.flatten(
+              _.zip(
+                audio.get("powerSpectrum"),
+                audio.get("amplitudeSpectrum"),
+                audio.get("powerSpectrum"),
+                audio.get("powerSpectrum"),
+                
+              )),
+              i=>i*256,
             )
           )
         }),

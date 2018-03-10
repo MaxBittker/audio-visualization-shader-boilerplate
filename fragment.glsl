@@ -3,6 +3,8 @@ uniform float t;
 uniform vec2 resolution;
 uniform sampler2D backBuffer;
 uniform float rms;
+uniform float energy;
+uniform float zcr;
 uniform sampler2D spectrum;
 
 // uniform sampler2D webcam;
@@ -32,17 +34,27 @@ void main() {
   polar.y = 1.0 - polar.y;
   polar.x = atan(uv.y, uv.x);
   polar.x -= 1.57079632679;
-  if(polar.x < 0.0){
-  polar.x += 6.28318530718;
+  if (polar.x < 0.0) {
+    polar.x += 6.28318530718;
   }
   polar.x /= 6.28318530718;
   polar.x = 1.0 - polar.x;
-  
-    color = hsv2rgb(vec3(1.0,0.2,1.0)) *texture2D(spectrum, polar.yx).y;
-    if(length(color)<0.05){
-    vec2 textCoord = uv * 0.5 + vec2(0.5);
-    color = texture2D(backBuffer, textCoord + vec2(0, 1.0) * 500.*rms* pixel * noise(vec3(uv,t))).rgb * 0.995;
+  if (uv.x < 0.) {
+
+    color = hsv2rgb(vec3(1.0, 0.2, 1.0)) *
+            texture2D(spectrum, vec2(0.99) - polar.yx).y;
+  } else {
+    color = hsv2rgb(vec3(1.0, 0.2, 1.0)) *
+            texture2D(spectrum, vec2(0.99) - polar.yx).x;
   }
-    // color = vec3(1.0) * polar.y;
+
+  // texture2D(spectrum, uv ).y;
+  vec2 textCoord = uv * 0.5 + vec2(0.5);
+  vec3 color2 =
+      texture2D(backBuffer, textCoord + vec2(0, 1.0) * 500. * energy * pixel *
+                                            (1.0 +noise(vec3(uv, t))))
+          .rgb *
+      0.99;
+  color = max(color, color2);
   gl_FragColor = vec4(color, 1.0);
 }
