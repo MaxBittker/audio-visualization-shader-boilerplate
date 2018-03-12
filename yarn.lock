@@ -1604,6 +1604,10 @@ glsl-tokenizer@^2.0.0, glsl-tokenizer@^2.0.2:
   dependencies:
     through2 "^0.6.3"
 
+glsl-worley@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/glsl-worley/-/glsl-worley-1.0.2.tgz#27d61fdc98b9425c6c524c435f4f554bc2186bac"
+
 glslify-bundle@^2.0.4:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/glslify-bundle/-/glslify-bundle-2.0.4.tgz#795df119818078861aa1989a0c75d59c20ecfdd6"

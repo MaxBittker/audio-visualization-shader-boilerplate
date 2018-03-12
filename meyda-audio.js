@@ -3,7 +3,7 @@ const Meyda = require("meyda");
 
 const timeDomainFeatures = ["rms", "energy", "zcr"];
 
-const spectralFeatures = ["powerSpectrum", "amplitudeSpectrum","buffer", "spectralCentroid", "spectralFlatness"];
+const spectralFeatures = ["powerSpectrum", "amplitudeSpectrum", "spectralCentroid", "spectralFlatness"];
 
 function audioAnalyzer(options) {
   const regl = options.regl;

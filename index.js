@@ -32,7 +32,6 @@ let audioVisualization = (audio, {}) => {
                 audio.get("amplitudeSpectrum"),
                 audio.get("powerSpectrum"),
                 audio.get("powerSpectrum"),
-                
               )),
               i=>i*256,
             )
