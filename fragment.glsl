@@ -1,10 +1,11 @@
-precision mediump float;
+precision highp float;
 uniform float t;
 uniform vec2 resolution;
+uniform vec4 bands;
 uniform sampler2D backBuffer;
-uniform float rms;
-uniform float energy;
-uniform float zcr;
+// uniform float rms;
+// uniform float energy;
+// uniform float zcr;
 uniform sampler2D spectrum;
 // uniform sampler2D webcam;
 // uniform vec2 videoResolution;
@@ -35,20 +36,15 @@ void main() {
   polar.x = 1.0 - polar.x;
 
   vec2 sample;
-  sample.y=0.;
-  sample.x= 0.99 - worley3D(vec3(uv*2., t * 0.001), .5, false).x;
-  
-  color = hsv2rgb(vec3(1.0, 0.2, 1.0)) *
-          texture2D(spectrum,textCoord).y ;
-if(uv.y<0.9){
+  // sample.y=0.;
+  // sample.x= 0.99 - worley3D(vec3(uv*2., t * 0.001), .5, false).x;
+  sample = vec2(1.0) - polar.yx;
+  color = hsv2rgb(vec3(1.0, 0.2, 1.0)) * texture2D(spectrum, sample).x;
 
-  // texture2D(spectrum, uv ).y;
-   color = texture2D(backBuffer, textCoord+ vec2(0, 1.0) * pixel)
-                    .rgb;
-                // 0.9;
-}
-                
-  // color = max(color, color2);
+  sample = textCoord + vec2(0, 1.0)  * (1.+ noise(vec3(uv*200.,t))) * pixel * length(bands)*10.;
+  vec3 color2 = texture2D(backBuffer, sample).rgb *0.99;
 
+  color = max(color, color2);
+// color =bands.rgb;
   gl_FragColor = vec4(color, 1.0);
 }

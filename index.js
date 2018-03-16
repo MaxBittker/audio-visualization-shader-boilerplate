@@ -1,10 +1,10 @@
 import { setupOverlay } from "regl-shader-error-overlay";
-import _ from 'lodash';
+import _ from "lodash";
 setupOverlay();
 
 const regl = require("regl")({ pixelRatio: 2 });
 const wc = require("./regl-webcam");
-const {audioAnalyzer, timeDomainFeatures, spectralFeatures} = require("./meyda-audio");
+import { audioAnalyzer } from "./audio";
 
 let fsh = require("./fragment.glsl");
 let vsh = require("./vertex.glsl");
@@ -16,30 +16,50 @@ let audioVisualization = (audio, {}) => {
     frag: fsh,
     uniforms: {
       // webcam,
-      rms: ()=>audio.get("rms"),
-      energy: ()=>audio.get("energy"),
-      zcr: ()=>audio.get("zcr"),
-      
-      spectrum: () =>
-        regl.texture({
-          width: audio.get("powerSpectrum").length,
+      bands: () => {
+        var dataArray = new Uint8Array(audio.frequencyBinCount);
+        audio.getByteFrequencyData(dataArray);
+        let bands = new Array(4);
+        var k = 0;
+        var f = 0.0;
+        var a = 5,
+          b = 11,
+          c = 24,
+          d = 512,
+          i = 0;
+        for (; i < a; i++) f += dataArray[i];
+        f *= 0.2; // 1/(a-0)
+        f *= 0.003921569; // 1/255
+        bands[0] = f;
+        f = 0.0;
+        for (; i < b; i++) f += dataArray[i];
+        f *= 0.166666667; // 1/(b-a)
+        f *= 0.003921569; // 1/255
+        bands[1] = f;
+        f = 0.0;
+        for (; i < c; i++) f += dataArray[i];
+        f *= 0.076923077; // 1/(c-b)
+        f *= 0.003921569; // 1/255
+        bands[2] = f;
+        f = 0.0;
+        for (; i < d; i++) f += dataArray[i];
+        f *= 0.00204918; // 1/(d-c)
+        f *= 0.003921569; // 1/255
+        bands[3] = f;
+        return bands
+      },
+      spectrum: () => {
+        var dataArray = new Uint8Array(audio.frequencyBinCount); // Uint8Array should be the same length as the frequencyBinCount
+        audio.getByteFrequencyData(dataArray);
+        return regl.texture({
+          width: dataArray.length,
           height: 1,
-          data: new Uint8Array(
-            _.map(
-            _.flatten(
-              _.zip(
-                audio.get("powerSpectrum"),
-                audio.get("amplitudeSpectrum"),
-                audio.get("powerSpectrum"),
-                audio.get("powerSpectrum"),
-              )),
-              i=>i*256,
-            )
-          )
-        }),
+          data: new Uint8Array(_.flatMap(dataArray, i => [i, i, i, i]))
+        });
+      },
       // videoResolution: [videoWidth, videoHeight],
       // Becomes `uniform float t`  and `uniform vec2 resolution` in the shader.
-      t: ({ tick }) => tick,
+      t: ({ tick }) => tick / 100,
       resolution: ({ viewportWidth, viewportHeight }) => [
         viewportWidth,
         viewportHeight

@@ -12,7 +12,7 @@ function audioAnalyzer(options) {
       options.error && options.error(err);
       return;
     }
-
+    
     var context = new AudioContext();
     var source = context.createMediaStreamSource(stream);
     let features = [...timeDomainFeatures, ...spectralFeatures];
