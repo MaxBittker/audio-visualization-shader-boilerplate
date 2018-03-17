@@ -37,7 +37,7 @@ void main() {
 
   vec2 sample;
   // sample.y=0.;
-  // sample.x= 0.99 - worley3D(vec3(uv*2., t * 0.001), .5, false).x;
+  // sample.x= 0.99 - worley3D(vec3(uv*2., t * 0.1), .5, false).x;
   sample = vec2(1.0) - polar.yx;
   color = hsv2rgb(vec3(1.0, 0.2, 1.0)) * texture2D(spectrum, sample).x;
 
