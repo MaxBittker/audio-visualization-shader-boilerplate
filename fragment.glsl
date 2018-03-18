@@ -45,12 +45,13 @@ vec2 doModel(vec3 p) {
 
   // r = noise(vec4(p, t), 2) * 0.4;
   // r -= 1.01 * texture2D(spectrum, vec2(r-1.2)).x;
-  float h = texture2D(spectrum, vec2((p.y*0.1)  + 0.4,0.)).x;
+  float h = 0.;
+   h = texture2D(spectrum, vec2((p.y * 0.1) + 0.4, 0.)).x;
   // float d = udBox(p, vec3(1.0, 2.0, 1.0 + r));
-  float d = sdPlane(p - vec3(.0, r, h*0.1), vec4(0., 0.6, 0.5, 0.0));
+  float d = sdPlane(p - vec3(.0, r, h * 0.5), vec4(0., 0.6, 0.5, 0.0));
   // p+=vec3(2.1,0.,0.);
   // d = min(udBox(p, vec3(r) ), d);
-
+  // d = max(d, length(p - vec3(0., 0., -0.5)) - 1.5);
   // r = 1.00 - 0.01;
   // r -= abs(worley3D((p * 2.5), 1.0, false).x * 0.2);
   // d = min(d, length(p) - r);
@@ -63,23 +64,26 @@ vec3 lighting(vec3 pos, vec3 nor, vec3 ro, vec3 rd) {
 
   vec3 dir1 = normalize(vec3(0, 1, 0));
   vec3 col1 = vec3(3.0, 2.0, 1.9);
-  col1 = hsv2rgb
-    (vec3(dot(nor, rd) + noise4d(vec4(nor * 50., t)) * 0.1,
-    dot(nor, rd) * 0.5,
-      abs(dot(nor, pos))+0.4
-                      ));
+  float grain = noise4d(vec4(nor*280., t)) * 0.2;
+  col1 = hsv2rgb(vec3(
+    fract(dot(nor, rd) + grain)*0.8,
+                      dot(nor, rd) * 0.8, abs(dot(nor, rd))*1. + 0.0));
 
   vec3 dif1 = col1 * orenn(dir1, -rd, nor, 0.15, 1.0);
-  vec3 spc1 = col1 * gauss(dir1, -rd, nor, 0.15) * 0.1;
+  vec3 spc1 = col1 * gauss(dir1, -rd, nor, 0.15) * 0.0;
 
   vec3 dir2 = normalize(vec3(0.9, .0, 0.7));
   vec3 col2 = vec3(0.9, 0.9, 2.1);
-  col2 = hsv2rgb(vec3((dot(nor, dir2)), 0.3, 2.0));
+  col2 = hsv2rgb(vec3(
+    (fract(dot(nor, dir2) + grain)*0.8)+0.4,
+     0.3, 2.8));
 
   vec3 dif2 = col2 * orenn(dir2, -rd, nor, 0.15, 1.0) * 1.0;
   vec3 spc2 = col2 * gauss(dir2, -rd, nor, 0.15) * 0.1;
 
-  return (dif1 + spc1 + dif2 + spc2) * occ;
+  return (dif1 + spc1 
+  + dif2 + spc2
+  ) * occ;
 }
 
 void main() {
@@ -102,7 +106,7 @@ void main() {
 
   vec3 ro, rd;
 
-  float rotation = 0.;
+  float rotation = sin(t * 5.) * 0.1;
   float height = 1.;
   float dist = 3.0;
 
@@ -116,10 +120,9 @@ void main() {
     color = lighting(pos, nor, ro, rd);
   }
 
-  vec2 sample =
-      textCoord +
-      normalize(vec2(0.0) - uv) * pixel * (length(bands.xy) + 0.01) * 3. +
-      (pixel * bands.z * noise3d(vec3(uv * 200., t)));
+  vec2 outward = normalize(vec2(0.0) - uv) * pixel;
+  vec2 sample = textCoord + outward * 5. * length(bands) +
+                (pixel * bands.z * noise3d(vec3(uv * 200., t)));
 
   vec3 color2 = 0.99 *
                 (texture2D(backBuffer, sample).rgb +
@@ -127,9 +130,12 @@ void main() {
                  texture2D(backBuffer, sample - sin(t * 0.01) * pixel).rgb) /
                 3.;
 
-  // if (length(color) < 0.1) {
-  // color = max(color, color2);
-  // }
+  vec3 color3 = texture2D(spectrum, abs(vec2(0.5) - sample)).rgb * 2.;
+
+  if (length(color) < 0.01) {
+    // color = color3;
+    // color = max(color, color2);
+  }
 
   gl_FragColor.rgb = color;
   gl_FragColor.a = 1.0;
