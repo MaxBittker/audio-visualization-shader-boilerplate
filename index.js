@@ -2,7 +2,7 @@ import { setupOverlay } from "regl-shader-error-overlay";
 import _ from "lodash";
 setupOverlay();
 
-const regl = require("regl")({ pixelRatio: 2 });
+const regl = require("regl")({ pixelRatio: 0.5 });
 const wc = require("./regl-webcam");
 import { audioAnalyzer } from "./audio";
 

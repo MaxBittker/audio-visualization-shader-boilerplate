@@ -24,9 +24,17 @@ vec2 doModel(vec3 p);
 #pragma glslify: gauss = require('glsl-specular-gaussian')
 #pragma glslify: sdPlane	= require('glsl-sdf-primitives/sdPlane')
 #pragma glslify: calcAO = require('glsl-sdf-ops/ao', map = doModel )
+// #pragma glslify: aU = require('glsl-sdf-ops/aU', map = doModel )
 
 // clang-format on
 vec2 pixel = vec2(1.0) / resolution;
+
+float smin( float a, float b, float k )
+{
+    float res = exp( -k*a ) + exp( -k*b );
+    return -log( res )/k;
+}
+
 
 float sdTorus(vec3 p, vec2 t) {
   vec2 q = vec2(length(p.xz) - t.x, p.y);
@@ -35,8 +43,8 @@ float sdTorus(vec3 p, vec2 t) {
 float udBox(vec3 p, vec3 b) { return length(max(abs(p) - b, 0.0)); }
 vec2 doModel(vec3 p) {
   // p += bands.xyz * 0.1;
-  float r = 0.;
-  r += noise4d(vec4((p * 0.9), t)) * 0.5;
+  float r = (sin(t*2.)+3.0)*0.25;
+  r += noise4d(vec4((p * 0.9), t)) * 0.5*bands.y;
   r += noise4d(vec4((p * 1.5), t)) * 0.05;
   // r += noise4d(vec4((p * 10.5), t)) * 0.001;
   // r += noise4d(vec4((p * 2.0), t)) * 0.3* 0.5 * 0.5;
@@ -47,8 +55,17 @@ vec2 doModel(vec3 p) {
   // r -= 1.01 * texture2D(spectrum, vec2(r-1.2)).x;
   float h = 0.;
    h = texture2D(spectrum, vec2((p.y * 0.1) + 0.4, 0.)).x;
-  // float d = udBox(p, vec3(1.0, 2.0, 1.0 + r));
-  float d = sdPlane(p - vec3(.0, r, h * 0.5), vec4(0., 0.6, 0.5, 0.0));
+
+
+  float d = udBox(p, vec3(r));
+
+  d = smin(
+    d,
+     udBox(p+ vec3(r), vec3(1.0-r))
+     ,3.9 
+  );
+  // float d = sdPlane(p - vec3(.0, r, h * 0.5), vec4(0., 0.6, 0.5, 0.0));
+
   // p+=vec3(2.1,0.,0.);
   // d = min(udBox(p, vec3(r) ), d);
   // d = max(d, length(p - vec3(0., 0., -0.5)) - 1.5);
@@ -67,18 +84,19 @@ vec3 lighting(vec3 pos, vec3 nor, vec3 ro, vec3 rd) {
   float grain = noise4d(vec4(nor*280., t)) * 0.2;
   col1 = hsv2rgb(vec3(
     fract(dot(nor, rd) + grain)*0.8,
-                      dot(nor, rd) * 0.8, abs(dot(nor, rd))*1. + 0.0));
+                      dot(nor, rd) * 0.8, abs(dot(nor, rd))*18. + 0.0));
 
   vec3 dif1 = col1 * orenn(dir1, -rd, nor, 0.15, 1.0);
-  vec3 spc1 = col1 * gauss(dir1, -rd, nor, 0.15) * 0.0;
+  vec3 spc1 = col1 * gauss(dir1, -rd, nor, 0.15) * 3.0;
 
-  vec3 dir2 = normalize(vec3(0.9, .0, 0.7));
+  vec3 dir2 = normalize(vec3(0.9, 3.0, -0.7));
   vec3 col2 = vec3(0.9, 0.9, 2.1);
-  col2 = hsv2rgb(vec3(
-    (fract(dot(nor, dir2) + grain)*0.8)+0.4,
-     0.3, 2.8));
+  
+  // col2 = hsv2rgb(vec3(
+  //   (fract(dot(nor, dir2) + grain)*0.8)+0.4,
+  //    0.3, 2.8));
 
-  vec3 dif2 = col2 * orenn(dir2, -rd, nor, 0.15, 1.0) * 1.0;
+  vec3 dif2 = col2 * orenn(dir2, -rd, nor, 0.15, 1.0) * 2.0;
   vec3 spc2 = col2 * gauss(dir2, -rd, nor, 0.15) * 0.1;
 
   return (dif1 + spc1 
@@ -106,9 +124,9 @@ void main() {
 
   vec3 ro, rd;
 
-  float rotation = sin(t * 5.) * 0.1;
-  float height = 1.;
-  float dist = 3.0;
+  float rotation = t;sin(t * 5.) * 0.1;
+  float height = 4.;
+  float dist = 5.0;
 
   camera(rotation, height, dist, resolution.xy, ro, rd);
 
@@ -121,10 +139,10 @@ void main() {
   }
 
   vec2 outward = normalize(vec2(0.0) - uv) * pixel;
-  vec2 sample = textCoord + outward * 5. * length(bands) +
-                (pixel * bands.z * noise3d(vec3(uv * 200., t)));
+  vec2 sample = textCoord + outward * 0.5 +
+                (pixel * 5.* bands.z * noise3d(vec3(uv * 2.+bands.y, t+bands.x)));
 
-  vec3 color2 = 0.99 *
+  vec3 color2 = 0.999 *
                 (texture2D(backBuffer, sample).rgb +
                  texture2D(backBuffer, sample + sin(t * 0.01) * pixel).rgb +
                  texture2D(backBuffer, sample - sin(t * 0.01) * pixel).rgb) /
@@ -134,7 +152,7 @@ void main() {
 
   if (length(color) < 0.01) {
     // color = color3;
-    // color = max(color, color2);
+    color = max(color, color2);
   }
 
   gl_FragColor.rgb = color;
