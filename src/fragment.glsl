@@ -42,7 +42,7 @@ float udBox(vec3 p, vec3 b) { return length(max(abs(p) - b, 0.0)); }
 vec2 doModel(vec3 p) {
   // p += bands.xyz * 0.1;
   float r = (sin(t * 2.) + 3.0) * 0.25;
-  r += noise4d(vec4((p * 0.9), t)) * 0.5 * bands.y;
+  r += noise4d(vec4((p * 49.9), t)) * 0.5 * bands.y;
   r += noise4d(vec4((p * 1.5), t)) * 0.05;
   // r += noise4d(vec4((p * 10.5), t)) * 0.001;
   // r += noise4d(vec4((p * 2.0), t)) * 0.3* 0.5 * 0.5;
@@ -115,7 +115,7 @@ void main() {
   vec3 ro, rd;
 
   float rotation = t;
-  sin(t * 5.) * 0.1;
+  // sin(t * 50.) * 0.1;
   float height = 4.;
   float dist = 5.0;
 
@@ -129,13 +129,13 @@ void main() {
     color = lighting(pos, nor, ro, rd);
   }
   if (luma(color) < 1.5 * noise3d(vec3(uv * 20., t))) {
-    color = vec3(0.);
+    // color = vec3(0.);
   } else {
     // color
   }
   vec2 outward = normalize(vec2(0.0) - uv) * pixel;
   vec2 sample =
-      textCoord + outward * 0.5 +
+      textCoord + outward * 2.5 +
       (pixel * 5. * bands.z * noise3d(vec3(uv * 2. + bands.y, t + bands.x)));
 
   vec3 color2 = 0.999 *
@@ -146,7 +146,7 @@ void main() {
 
   vec3 color3 = texture2D(spectrum, abs(vec2(0.5) - sample)).rgb * 2.;
 
-  if (length(color) < 0.01) {
+  if (length(color) < 0.21) {
     // color = color3;
     // color = max(color, color2);
   }

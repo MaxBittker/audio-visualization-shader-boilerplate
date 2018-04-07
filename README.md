@@ -1,26 +1,18 @@
 # webcam-shader-boilerplate
 
-This is an opinionated starter repo for writing fragment shader code that interacts with microphone input in the browser, to visualize audio! 
+This is an opinionated starter repo for writing fragment shader code that interacts with microphone input in the browser, to visualize audio!
 
 `npm run start` to start the devserver.
 
 Annotated dependency list:
-- `meyda`: audio feature extraction library. It works with the Web Audio API (or plain old JavaScript arrays) to expose information about the timbre and perceived qualities of sound.
 
-- `regl`:  Declarative wrapper over WebGL state machine. A regl command is analogous to a react component. We have a single command, `drawTriangle`.
+* `regl`: Declarative wrapper over WebGL state machine. A regl command is analogous to a react component. We have a single command, `drawTriangle`.
 
-- `glslify`: Enables importing libraries from node_modules, aka `#pragma glslify: hsv2rgb = require('glsl-hsv2rgb')`. Makes GLSL fun.
+* `glslify`: Enables importing libraries from node_modules, aka `#pragma glslify: hsv2rgb = require('glsl-hsv2rgb')`. Makes GLSL fun.
 
-- `glsl-hsv2rgb`: An example of a glslify library. Does some fancy math to convert between color spaces, and does it with branchless logic.
+* `glsl-hsv2rgb`: An example of a glslify library. Does some fancy math to convert between color spaces, and does it with branchless logic.
 
-- `webpack`:  Handles packing index.js and it's dependencies into bundle.js, suitable for the browser.
-
-- `webpack-dev-server`: Runs webpack in a mode that auto-reloads in your browser.
-
-- `glslify-loader`: Runs glslify for webpack and resolves `.glsl` files to javascript strings.
-
-- `raw-loader`: Sidekick for `glslify-loader`. Resolves and loads raw text files for webpack, in this case `fragment.glsl`
-
+* `shader-reload-cli`: budo + live shader reloading
 
 ## glslify libraries to consider (adapted from the [stackgl wiki](https://github.com/stackgl/stackgl.github.io/wiki))
 

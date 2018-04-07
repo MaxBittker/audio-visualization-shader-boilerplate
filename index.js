@@ -1,23 +1,28 @@
-import { setupOverlay } from "regl-shader-error-overlay";
-import _ from "lodash";
+let { setupOverlay } = require("regl-shader-error-overlay");
+let _ = require("lodash");
 setupOverlay();
 
 const regl = require("regl")({ pixelRatio: 0.5 });
-const wc = require("./regl-webcam");
-import { audioAnalyzer } from "./audio";
+let { audioAnalyzer } = require("./src/audio");
 
-let fsh = require("./fragment.glsl");
-let vsh = require("./vertex.glsl");
-
+let shaders = require("./src/pack.shader.js");
 const lastFrame = regl.texture();
 const pixels = regl.texture();
 let audioBuffer = null;
 
+let vert = shaders.vertex;
+let frag = shaders.fragment;
+
+shaders.on("change", () => {
+  console.log("update");
+  vert = shaders.vertex;
+  frag = shaders.fragment;
+});
+// let vert =
+
 let audioVisualization = (audio, {}) => {
   let drawTriangle = regl({
-    frag: fsh,
     uniforms: {
-      // webcam,
       bands: () => {
         let bands = new Array(4);
         var k = 0;
@@ -46,7 +51,7 @@ let audioVisualization = (audio, {}) => {
         f *= 0.00204918; // 1/(d-c)
         f *= 0.003921569; // 1/255
         bands[3] = f;
-        return bands
+        return bands;
       },
       spectrum: () => {
         return regl.texture({
@@ -55,18 +60,16 @@ let audioVisualization = (audio, {}) => {
           data: new Uint8Array(_.flatMap(audioBuffer, i => [i, i, i, i]))
         });
       },
-      // videoResolution: [videoWidth, videoHeight],
       t: ({ tick }) => tick / 100,
       resolution: ({ viewportWidth, viewportHeight }) => [
         viewportWidth,
         viewportHeight
       ],
       backBuffer: lastFrame
-      // Many datatypes are supported here.
-      // See: https://github.com/regl-project/regl/blob/gh-pages/API.md#uniforms
     },
 
-    vert: vsh,
+    frag: () => shaders.fragment,
+    vert: () => shaders.vertex,
     attributes: {
       // Full screen triangle
       position: [[-1, 4], [-1, -1], [4, -1]]
@@ -77,11 +80,12 @@ let audioVisualization = (audio, {}) => {
 
   regl.frame(function(context) {
     window.a = audio;
-    if( !audioBuffer){
+
+    if (!audioBuffer) {
       audioBuffer = new Uint8Array(audio.frequencyBinCount);
     }
     audio.getByteFrequencyData(audioBuffer);
-    
+
     regl.clear({
       color: [0, 0, 0, 1]
     });
@@ -96,4 +100,3 @@ let audio = audioAnalyzer({
   regl,
   done: audioVisualization
 });
-
