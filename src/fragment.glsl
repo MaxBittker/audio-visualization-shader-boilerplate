@@ -246,11 +246,12 @@ float sdTorus(vec3 p, vec2 t) {
 }
 float udBox(vec3 p, vec3 b) { return length(max(abs(p) - b, 0.0)); }
 vec2 doModel(vec3 p) {
+  p += noise3d(p * 10. + t * 0.5) * max(0., (p.x + 0.5) * 0.02);
   float wobble = sin(PI / 20. * t);
   float wobbleX2 = sin(PI / 20. * t * 2.);
   pR(p.xy, wobbleX2 * .5);
   pR(p.xz, wobbleX2 * .5);
-  float a = 10. * bands.x - bands.y;
+  float a = 3.;
   pTwistIcosahedron(p, a);
   return vec2(fIcosahedron(p, 1.), 0.0);
   p += bands.xyz * 0.1;
@@ -286,27 +287,24 @@ vec2 doModel(vec3 p) {
 vec3 lighting(vec3 pos, vec3 nor, vec3 ro, vec3 rd) {
   float occ = calcAO(pos, nor);
 
-  vec3 dir1 = normalize(vec3(0, 1, 0));
+  vec3 dir1 = normalize(vec3(1.));
   vec3 col1 = vec3(3.0, 2.0, 1.9);
   float grain = noise4d(vec4(nor * 80., t)) * 0.2;
 
-  col1 = hsv2rgb(
-      vec3(fract(dot(nor, rd) + grain) * 0.01, dot(nor, rd) * 1.4, 1.0));
+  col1 = hsv2rgb(vec3(fract(dot(nor, rd) + grain) * 0.7, 0.3, 1.0));
 
   vec3 dif1 = col1 * orenn(dir1, -rd, nor, 0.15, 1.0);
   vec3 spc1 = col1 * gauss(dir1, -rd, nor, 0.15) * 0.2;
 
-  vec3 dir2 = normalize(vec3(0.9, 3.0, -0.7));
+  vec3 dir2 = normalize(rd + nor);
   vec3 col2 = vec3(0.9, 0.9, 2.1);
 
-  // col2 = hsv2rgb(vec3(
-  //   (fract(dot(nor, dir2) + grain)*0.8)+0.4,
-  //    0.3, 2.8));
+  col2 = hsv2rgb(vec3((fract(dot(nor, dir2) + grain) * 0.8) + 0.4, 0.3, 2.8));
 
   vec3 dif2 = col2 * orenn(dir2, -rd, nor, 0.15, 1.0) * 1.0;
   vec3 spc2 = col2 * gauss(dir2, -rd, nor, 0.15) * 0.1;
 
-  return (dif1 + spc1 + dif2 + spc2) * occ * 0.9;
+  return vec3(0.1) + (dif1 + spc1 + dif2 + spc2) * occ * 0.9;
 }
 
 void main() {
@@ -331,9 +329,9 @@ void main() {
 
   vec3 ro, rd;
 
-  float rotation = t;
+  float rotation = 0.;
   float height = 0.0;
-  float dist = 5.0;
+  float dist = 3.5;
 
   camera(rotation, height, dist, resolution.xy, ro, rd);
 
@@ -347,24 +345,22 @@ void main() {
   }
 
   vec2 outward = normalize(vec2(0.0) - uv) * pixel * 2.;
-  vec2 sample = textCoord + outward * 1.0 +
-                (pixel * 5. * bands.z *
-                 noise3d(vec3(uv * 2. + bands.y, nor.y * 2. + bands.x)));
+  outward = vec2(0., 1.0) * pixel;
+  vec2 randa = vec2(sin(t * 2.0), cos(t * 2.)) * pixel;
+  vec2 sample = textCoord + outward;
 
-  vec2 randa = vec2(sin(t * 0.1), cos(t * 0.1));
-
-  vec3 color2 = 1.0 * (texture2D(backBuffer, textCoord + outward).rgb);
-  // +
-  //  texture2D(backBuffer, textCoord + outward + randa * pixel).rgb +
-  //  texture2D(backBuffer, textCoord + outward - randa * pixel).rgb) /
-  // 3.;
+  float mix = 0.1;
+  vec3 color2 = 0.999 * (texture2D(backBuffer, sample).rgb * (1.0 - mix * 2.) +
+                         texture2D(backBuffer, sample + randa).rgb * mix +
+                         texture2D(backBuffer, sample - randa).rgb * mix);
 
   // color = texture2D(spectrum, abs(vec2(0.5) - sample)).rgb * 2.;
 
-  if (luma(color) < -0.5) {
-    color = color2;
+  if (length(color) < 0.01) {
+    // color = color2;
   }
-  if (luma(color) < 1.0 + noise3d(vec3(uv * 200., length(bands)))) {
+  // color += (color - color2 * 0.1) * 2.7;
+  if (luma(color) < 0.8 + noise3d(vec3(uv * 200., length(bands)))) {
     // color = vec3(0.);
   } else {
     // color = vec3(1.0);
