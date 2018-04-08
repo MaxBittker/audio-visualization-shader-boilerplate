@@ -17,6 +17,8 @@ shaders.on("change", () => {
   console.log("update");
   vert = shaders.vertex;
   frag = shaders.fragment;
+  let overlay = document.getElementById("regl-overlay-error");
+  overlay && overlay.parentNode.removeChild(overlay);
 });
 // let vert =
 

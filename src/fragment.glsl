@@ -41,9 +41,9 @@ float sdTorus(vec3 p, vec2 t) {
 float udBox(vec3 p, vec3 b) { return length(max(abs(p) - b, 0.0)); }
 vec2 doModel(vec3 p) {
   // p += bands.xyz * 0.1;
-  float r = (sin(t * 2.) + 3.0) * 0.25;
-  r += noise4d(vec4((p * 49.9), t)) * 0.5 * bands.y;
-  r += noise4d(vec4((p * 1.5), t)) * 0.05;
+  float r = (bands.x + 4.0) * 0.25;
+  r += noise4d(vec4((p * 2.0), t)) * 0.15 * bands.y;
+  // r += noise4d(vec4((p * 2.5 * bands.x), t)) * 0.05;
   // r += noise4d(vec4((p * 10.5), t)) * 0.001;
   // r += noise4d(vec4((p * 2.0), t)) * 0.3* 0.5 * 0.5;
   // r += (noise4d(vec4((p * 4.)+  bands.z*0.1, t)) * 0.3* 0.25 * 0.5);
@@ -54,9 +54,9 @@ vec2 doModel(vec3 p) {
   float h = 0.;
   h = texture2D(spectrum, vec2((p.y * 0.1) + 0.4, 0.)).x;
 
-  float d = udBox(p, vec3(r));
+  float d = length(p) - r;
 
-  d = smin(d, udBox(p + vec3(r), vec3(1.0 - r)), 3.9);
+  // d = max(-d, length((p + vec3(0.0, 0.1, 0.)).y) - r);
   // float d = sdPlane(p - vec3(.0, r, h * 0.5), vec4(0., 0.6, 0.5, 0.0));
 
   // p+=vec3(2.1,0.,0.);
@@ -75,11 +75,12 @@ vec3 lighting(vec3 pos, vec3 nor, vec3 ro, vec3 rd) {
   vec3 dir1 = normalize(vec3(0, 1, 0));
   vec3 col1 = vec3(3.0, 2.0, 1.9);
   float grain = noise4d(vec4(nor * 280., t)) * 0.2;
-  col1 = hsv2rgb(vec3(fract(dot(nor, rd) + grain) * 0.8, dot(nor, rd) * 0.8,
-                      abs(dot(nor, rd)) * 18. + 0.0));
+
+  col1 =
+      hsv2rgb(vec3(fract(dot(nor, rd) + grain) * 0.8, dot(nor, rd) * 0.8, 1.0));
 
   vec3 dif1 = col1 * orenn(dir1, -rd, nor, 0.15, 1.0);
-  vec3 spc1 = col1 * gauss(dir1, -rd, nor, 0.15) * 3.0;
+  vec3 spc1 = col1 * gauss(dir1, -rd, nor, 0.15) * 0.2;
 
   vec3 dir2 = normalize(vec3(0.9, 3.0, -0.7));
   vec3 col2 = vec3(0.9, 0.9, 2.1);
@@ -88,10 +89,10 @@ vec3 lighting(vec3 pos, vec3 nor, vec3 ro, vec3 rd) {
   //   (fract(dot(nor, dir2) + grain)*0.8)+0.4,
   //    0.3, 2.8));
 
-  vec3 dif2 = col2 * orenn(dir2, -rd, nor, 0.15, 1.0) * 2.0;
+  vec3 dif2 = col2 * orenn(dir2, -rd, nor, 0.15, 1.0) * 1.0;
   vec3 spc2 = col2 * gauss(dir2, -rd, nor, 0.15) * 0.1;
 
-  return (dif1 + spc1 + dif2 + spc2) * occ;
+  return (dif1 + spc1 + dif2 + spc2) * occ * 0.9;
 }
 
 void main() {
@@ -115,42 +116,38 @@ void main() {
   vec3 ro, rd;
 
   float rotation = t;
-  // sin(t * 50.) * 0.1;
-  float height = 4.;
-  float dist = 5.0;
+  float height = 4.5;
+  float dist = 1.0;
 
   camera(rotation, height, dist, resolution.xy, ro, rd);
 
-  vec2 t = raytrace(ro, rd);
-  if (t.x > -0.5) {
-    vec3 pos = ro + rd * t.x;
-    vec3 nor = normal(pos);
-
+  vec2 tr = raytrace(ro, rd);
+  vec3 pos;
+  vec3 nor;
+  if (tr.x > -0.5) {
+    pos = ro + rd * tr.x;
+    nor = normal(pos);
     color = lighting(pos, nor, ro, rd);
   }
-  if (luma(color) < 1.5 * noise3d(vec3(uv * 20., t))) {
-    // color = vec3(0.);
-  } else {
-    // color
-  }
-  vec2 outward = normalize(vec2(0.0) - uv) * pixel;
-  vec2 sample =
-      textCoord + outward * 2.5 +
-      (pixel * 5. * bands.z * noise3d(vec3(uv * 2. + bands.y, t + bands.x)));
 
-  vec3 color2 = 0.999 *
-                (texture2D(backBuffer, sample).rgb +
-                 texture2D(backBuffer, sample + sin(t * 0.01) * pixel).rgb +
-                 texture2D(backBuffer, sample - sin(t * 0.01) * pixel).rgb) /
-                3.;
+  vec2 outward = normalize(vec2(0.0) - uv) * pixel * 2.;
+  vec2 sample = textCoord + outward * 1.1 +
+                (pixel * 50. * bands.z *
+                 noise3d(vec3(uv * 2. + bands.y, nor.y * 2. + bands.x)));
+
+  vec2 randa = vec2(sin(t * 0.1), cos(t * 0.1));
+
+  vec3 color2 = 1.0 * (texture2D(backBuffer, textCoord + outward).rgb);
+  // +
+  //  texture2D(backBuffer, textCoord + outward + randa * pixel).rgb +
+  //  texture2D(backBuffer, textCoord + outward - randa * pixel).rgb) /
+  // 3.;
 
   vec3 color3 = texture2D(spectrum, abs(vec2(0.5) - sample)).rgb * 2.;
 
-  if (length(color) < 0.21) {
-    // color = color3;
-    // color = max(color, color2);
+  if (length(color3) > 1.5) {
+    color = color3;
   }
-
   gl_FragColor.rgb = color;
   gl_FragColor.a = 1.0;
 }
