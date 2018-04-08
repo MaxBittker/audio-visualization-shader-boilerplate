@@ -246,37 +246,38 @@ float sdTorus(vec3 p, vec2 t) {
 }
 float udBox(vec3 p, vec3 b) { return length(max(abs(p) - b, 0.0)); }
 vec2 doModel(vec3 p) {
-  float wobble = sin(PI / 2. * t);
-  float wobbleX2 = sin(PI / 2. * t * 2.);
+  float wobble = sin(PI / 20. * t);
+  float wobbleX2 = sin(PI / 20. * t * 2.);
   pR(p.xy, wobbleX2 * .5);
   pR(p.xz, wobbleX2 * .5);
   float a = 10. * bands.x - bands.y;
   pTwistIcosahedron(p, a);
   return vec2(fIcosahedron(p, 1.), 0.0);
-  // p += bands.xyz * 0.1;
-  float r = (bands.x + 4.0) * 0.25;
-  r += noise4d(vec4((p * 2.0), t)) * 0.15 * bands.y;
-  // r += noise4d(vec4((p * 2.5 * bands.x), t)) * 0.05;
+  p += bands.xyz * 0.1;
+  float r = 1.;
+  r += noise4d(vec4((p * 5.0), t)) * 0.15 * bands.y;
+  r += noise4d(vec4((p * 12.5 * bands.x), t)) * 0.05;
   // r += noise4d(vec4((p * 10.5), t)) * 0.001;
-  // r += noise4d(vec4((p * 2.0), t)) * 0.3* 0.5 * 0.5;
-  // r += (noise4d(vec4((p * 4.)+  bands.z*0.1, t)) * 0.3* 0.25 * 0.5);
+  // r += noise4d(vec4((p * 2.0), t)) * 0.3 * 0.5 * 0.5;
+  // r += (noise4d(vec4((p * 4.) + bands.z * 0.1, t)) * 0.3 * 0.25 * 0.5);
   // r += (noise4d(vec4((p * 8.)+  bands.w*0.1, t)) * 0.3* 0.125 * 0.5);
 
   // r = noise(vec4(p, t), 2) * 0.4;
-  // r -= 1.01 * texture2D(spectrum, vec2(r-1.2)).x;
+  // r -= 1.01 * texture2D(spectrum, vec2(r - 1.2)).x;
   float h = 0.;
-  h = texture2D(spectrum, vec2((p.y * 0.1) + 0.4, 0.)).x;
+  // h = texture2D(spectrum, vec2((p.y * 0.1) + 0.4, 0.)).x;
 
-  float d = length(p) - r;
+  float d = length(p) - r * 1.6;
+  // d = sdPlane(p - vec3(.0, r, h * 0.5), vec4(0., 0.6, 0.5, 0.0));
+  // d = max(-d, p.y - 0.5);
+  // r -= abs(worley3D((p * 2.5), 1.0, false).x * 0.2);
+  p += vec3(0., -0.5 + (1.0 * sin(t * 2.)), 0.).xxy;
+  p *= vec3(bands.x + 0.5, 0.2, 1.).xxy;
+  d = max(d, -(length(p) - (r * 1.0)));
 
-  // d = max(-d, length((p + vec3(0.0, 0.1, 0.)).y) - r);
-  // float d = sdPlane(p - vec3(.0, r, h * 0.5), vec4(0., 0.6, 0.5, 0.0));
-
-  // p+=vec3(2.1,0.,0.);
   // d = min(udBox(p, vec3(r) ), d);
   // d = max(d, length(p - vec3(0., 0., -0.5)) - 1.5);
   // r = 1.00 - 0.01;
-  // r -= abs(worley3D((p * 2.5), 1.0, false).x * 0.2);
   // d = min(d, length(p) - r);
   float id = 0.0;
   return vec2(d, id);
@@ -287,10 +288,10 @@ vec3 lighting(vec3 pos, vec3 nor, vec3 ro, vec3 rd) {
 
   vec3 dir1 = normalize(vec3(0, 1, 0));
   vec3 col1 = vec3(3.0, 2.0, 1.9);
-  float grain = noise4d(vec4(nor * 280., t)) * 0.2;
+  float grain = noise4d(vec4(nor * 80., t)) * 0.2;
 
-  col1 =
-      hsv2rgb(vec3(fract(dot(nor, rd) + grain) * 0.8, dot(nor, rd) * 0.8, 1.0));
+  col1 = hsv2rgb(
+      vec3(fract(dot(nor, rd) + grain) * 0.01, dot(nor, rd) * 1.4, 1.0));
 
   vec3 dif1 = col1 * orenn(dir1, -rd, nor, 0.15, 1.0);
   vec3 spc1 = col1 * gauss(dir1, -rd, nor, 0.15) * 0.2;
@@ -331,8 +332,8 @@ void main() {
   vec3 ro, rd;
 
   float rotation = t;
-  float height = 4.5;
-  float dist = 1.0;
+  float height = 0.0;
+  float dist = 5.0;
 
   camera(rotation, height, dist, resolution.xy, ro, rd);
 
@@ -346,8 +347,8 @@ void main() {
   }
 
   vec2 outward = normalize(vec2(0.0) - uv) * pixel * 2.;
-  vec2 sample = textCoord + outward * 1.1 +
-                (pixel * 50. * bands.z *
+  vec2 sample = textCoord + outward * 1.0 +
+                (pixel * 5. * bands.z *
                  noise3d(vec3(uv * 2. + bands.y, nor.y * 2. + bands.x)));
 
   vec2 randa = vec2(sin(t * 0.1), cos(t * 0.1));
@@ -358,16 +359,17 @@ void main() {
   //  texture2D(backBuffer, textCoord + outward - randa * pixel).rgb) /
   // 3.;
 
-  vec3 color3 = texture2D(spectrum, abs(vec2(0.5) - sample)).rgb * 2.;
+  // color = texture2D(spectrum, abs(vec2(0.5) - sample)).rgb * 2.;
 
-  if (length(color3) > 1.5) {
-    color = color3;
+  if (luma(color) < -0.5) {
+    color = color2;
   }
   if (luma(color) < 1.0 + noise3d(vec3(uv * 200., length(bands)))) {
     // color = vec3(0.);
   } else {
-    color = vec3(1.0);
+    // color = vec3(1.0);
   }
+  // color = max(color, color3);
   gl_FragColor.rgb = color;
   gl_FragColor.a = 1.0;
 }
