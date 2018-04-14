@@ -2,6 +2,7 @@ precision highp float;
 uniform float t;
 uniform vec2 resolution;
 uniform vec4 bands;
+uniform float m[8]; // midi
 uniform sampler2D backBuffer;
 uniform sampler2D spectrum;
 // uniform sampler2D webcam;
@@ -246,12 +247,12 @@ float sdTorus(vec3 p, vec2 t) {
 }
 float udBox(vec3 p, vec3 b) { return length(max(abs(p) - b, 0.0)); }
 vec2 doModel(vec3 p) {
-  p += noise3d(p * 10. + t * 0.5) * max(0., (p.x + 0.5) * 0.02);
+  p += noise3d(p * m[1] + t * 0.5) * max(0., (p.x + 0.5) * 0.02) * m[2];
   float wobble = sin(PI / 20. * t);
   float wobbleX2 = sin(PI / 20. * t * 2.);
   pR(p.xy, wobbleX2 * .5);
   pR(p.xz, wobbleX2 * .5);
-  float a = 3.;
+  float a = m[0];
   pTwistIcosahedron(p, a);
   return vec2(fIcosahedron(p, 1.), 0.0);
   p += bands.xyz * 0.1;
@@ -360,7 +361,7 @@ void main() {
     // color = color2;
   }
   // color += (color - color2 * 0.1) * 2.7;
-  if (luma(color) < 0.8 + noise3d(vec3(uv * 200., length(bands)))) {
+  if (luma(color) < m[3] + noise3d(vec3(uv * m[4], length(bands)))) {
     // color = vec3(0.);
   } else {
     // color = vec3(1.0);

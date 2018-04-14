@@ -4,6 +4,7 @@ setupOverlay();
 
 const regl = require("regl")({ pixelRatio: 0.5 });
 let { audioAnalyzer } = require("./src/audio");
+let { getMidiValue } = require("./src/midi");
 
 let shaders = require("./src/pack.shader.js");
 const lastFrame = regl.texture();
@@ -67,7 +68,16 @@ let audioVisualization = (audio, {}) => {
         viewportWidth,
         viewportHeight
       ],
-      backBuffer: lastFrame
+      backBuffer: lastFrame,
+
+      "m[0]": () => getMidiValue(0),
+      "m[1]": () => getMidiValue(1),
+      "m[2]": () => getMidiValue(2),
+      "m[3]": () => getMidiValue(3),
+      "m[4]": () => getMidiValue(4),
+      "m[5]": () => getMidiValue(5),
+      "m[6]": () => getMidiValue(6),
+      "m[7]": () => getMidiValue(7)
     },
 
     frag: () => shaders.fragment,
