@@ -2,7 +2,7 @@ let { setupOverlay } = require("regl-shader-error-overlay");
 let _ = require("lodash");
 setupOverlay();
 
-const regl = require("regl")({ pixelRatio: 0.5 });
+const regl = require("regl")({ pixelRatio: 1.2 });
 let { audioAnalyzer } = require("./src/audio");
 let { getMidiValue } = require("./src/midi");
 
