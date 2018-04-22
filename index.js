@@ -21,7 +21,6 @@ shaders.on("change", () => {
   let overlay = document.getElementById("regl-overlay-error");
   overlay && overlay.parentNode.removeChild(overlay);
 });
-// let vert =
 
 let audioVisualization = (audio, {}) => {
   let drawTriangle = regl({
