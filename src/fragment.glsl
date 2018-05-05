@@ -98,15 +98,18 @@ vec2 doModel(vec3 p) {
   float speed = m6;
   float id = 0.0;
   vec3 torus1p =
-      (vec4(p + vec3(-0.3, 0., 0.), 1.0) * rotateZ(t * speed + bands.x)).xzy;
+      (vec4(p + vec3(-0.3, 0., 0.), 1.0) * rotateZ(t * speed + bands.x * 2.))
+          .xzy;
   r += noise4d(vec4(torus1p * m0, t * 1.0)) * m1;
   r += noise4d(vec4((torus1p * m2), t * 1.0)) * m3 * bands.x * 3.;
   vec2 torSize = vec2(0.6, 0.2 - r);
   float d = sdTorus(torus1p, torSize);
 
   r = 0.;
+  // p = mod(p, vec3(m7));
   vec3 torus2p =
-      (vec4(p.xzy + vec3(0.3, 0., 0.), 1.0) * rotateZ(t * speed + bands.y)).xzy;
+      (vec4(p.xzy + vec3(0.3, 0., 0.), 1.0) * rotateZ(t * speed + bands.y * 2.))
+          .xzy;
 
   r += noise4d(vec4(torus2p * m0, t * 1.0)) * m1;
   r += noise4d(vec4((torus2p * m2), t * 1.0)) * m3 * bands.x * 3.;
@@ -114,10 +117,10 @@ vec2 doModel(vec3 p) {
   float d2 = sdTorus(torus2p, torSize);
 
   if (d > d2) {
-    id = m7;
+    id = 0.5;
   }
 
-  d = smin(d, d2, 8.);
+  d = smin(d, d2, 20.);
   // d = min(d, d2);
 
   return vec2(d, id);
@@ -194,7 +197,7 @@ void main() {
     vec2 randa = vec2(sin(t * 2.0), cos(t * 2.)) * pixel;
     vec2 sample = textCoord + outward;
 
-    float mix = 0.3;
+    float mix = 0.2;
     vec3 color2 =
         1.000 * (texture2D(backBuffer, sample).rgb * (1.0 - mix * 2.) +
                  texture2D(backBuffer, sample + randa).rgb * mix +
