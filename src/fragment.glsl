@@ -30,7 +30,16 @@ vec2 doModel(vec3 p);
 #pragma glslify: camera = require('glsl-turntable-camera')
 #pragma glslify: orenn = require('glsl-diffuse-oren-nayar')
 #pragma glslify: gauss = require('glsl-specular-gaussian')
+
+#pragma glslify: sdSphere	= require('glsl-sdf-primitives/sdSphere')
 #pragma glslify: sdPlane	= require('glsl-sdf-primitives/sdPlane')
+#pragma glslify: sdBox	= require('glsl-sdf-primitives/sdBox')
+#pragma glslify: sdCylinder	= require('glsl-sdf-primitives/sdCylinder')
+#pragma glslify: sdTorus	= require('glsl-sdf-primitives/sdTorus')
+#pragma glslify: sdHexPrism	= require('glsl-sdf-primitives/sdHexPrism')
+#pragma glslify: sdCappedCone	= require('glsl-sdf-primitives/sdCappedCone')
+#pragma glslify: sdCappedCylinder	= require('glsl-sdf-primitives/sdCappedCylinder')
+
 #pragma glslify: calcAO = require('glsl-sdf-ops/ao', map = doModel )
 // #pragma glslify: aU = require('glsl-sdf-ops/aU', map = doModel )
 
@@ -45,13 +54,6 @@ float smin(float a, float b, float k) {
   float res = exp(-k * a) + exp(-k * b);
   return -log(res) / k;
 }
-
-float sdTorus(vec3 p, vec2 t) {
-  vec2 q = vec2(length(p.xz) - t.x, p.y);
-  return length(q) - t.y;
-}
-
-float udBox(vec3 p, vec3 b) { return length(max(abs(p) - b, 0.0)); }
 
 // clang-format off
 
@@ -87,42 +89,76 @@ mat4 rotateZ(float theta) {
 }
 // clang-format on
 
+vec3 opTwist(vec3 p) {
+  float c = cos(10.0 * p.y + 10.0);
+  float s = sin(10.0 * p.y + 10.0);
+  mat2 m = mat2(c, -s, s, c);
+  return vec3(m * p.xz, p.y);
+}
+
+float bolt0(vec3 p) {
+  p = (vec4(p, 1.0) * rotateX(t)).xyz;
+  float r = 0.15;
+  float d = sdCappedCylinder(p, vec2(r));
+
+  float d2 = sdBox(p, vec3(10., 1.0, 10.));
+  d = max(d, d2);
+
+  vec3 threadp = p + vec3(-r, 0.1, -r);
+  threadp = (vec4(threadp, 1.0) * rotateY(p.y * 55.)).xyz;
+
+  d = smin(d, sdBox(threadp, vec3(0.1, 0.9, r + 0.01)), 30.);
+
+  vec3 hexp = (vec4(p + vec3(-r, -.9, -r), 1.0)).xzy;
+  float top = min(d, sdHexPrism(hexp, vec2(0.3, 0.15)));
+
+  float dome = sdSphere((hexp + vec3(0., 0., -0.1)) * vec3(1., 1., 2.), 0.3);
+  top = min(top, dome);
+
+  d = min(top, d);
+  float neck = min(d, sdCylinder(p + vec3(0.05), vec3(r + 0.05)));
+  float d3 = sdBox(p + vec3(0., -0.6, 0.), vec3(10., 0.15, 10.));
+
+  neck = max(neck, d3);
+  d = min(d, neck);
+  return d;
+}
+
+float bolt1(vec3 p) {
+  p = (vec4(p, 1.0) * rotateY(t)).xyz;
+  float r = 0.15;
+  float d = sdCylinder(p, vec3(r));
+
+  float d2 = sdBox(p, vec3(10., 1.0, 10.));
+  d = max(d, d2);
+
+  vec3 threadp = p + vec3(-r, 0.1, -r);
+  threadp = (vec4(threadp, 1.0) * rotateY(p.y * 55.)).xyz;
+
+  d = smin(d, sdBox(threadp, vec3(0.1, 0.9, r + 0.01)), 30.);
+
+  vec3 hexp = (vec4(p + vec3(-r, -.9, -r), 1.0)).xzy;
+  float top = min(d, sdHexPrism(hexp, vec2(0.3, 0.15)));
+
+  float dome = sdSphere((hexp + vec3(0., 0., -0.1)) * vec3(1., 1., 2.), 0.3);
+  top = min(top, dome);
+
+  d = min(top, d);
+  float neck = min(d, sdCylinder(p + vec3(0.05), vec3(r + 0.05)));
+  float d3 = sdBox(p + vec3(0., -0.6, 0.), vec3(10., 0.15, 10.));
+
+  neck = max(neck, d3);
+  d = min(d, neck);
+  return d;
+}
+
 vec2 doModel(vec3 p) {
-  float r = 0.;
-  // r += noise3d(p * m0 + t) * m1;
-  // r += noise4d(vec4((p * 2.0), t)) * 0.3 * 0.5 * 0.5;
-  // r = noise(vec4(p, t), 2) * 0.4;
-  float h = 0.;
-  // h = texture2D(spectrum, vec2((p.y * 0.1) + 0.4, 0.)).x * -0.1;
-  // p;
-  float speed = m6;
-  float id = 0.0;
-  vec3 torus1p =
-      (vec4(p + vec3(-0.3, 0., 0.), 1.0) * rotateZ(t * speed + bands.x * 2.))
-          .xzy;
-  r += noise4d(vec4(torus1p * m0, t * 1.0)) * m1;
-  r += noise4d(vec4((torus1p * m2), t * 1.0)) * m3 * bands.x * 3.;
-  vec2 torSize = vec2(0.6, 0.2 - r);
-  float d = sdTorus(torus1p, torSize);
+  float b0 = bolt0(p);
+  float b1 = bolt1(p);
 
-  r = 0.;
-  // p = mod(p, vec3(m7));
-  vec3 torus2p =
-      (vec4(p.xzy + vec3(0.3, 0., 0.), 1.0) * rotateZ(t * speed + bands.y * 2.))
-          .xzy;
-
-  r += noise4d(vec4(torus2p * m0, t * 1.0)) * m1;
-  r += noise4d(vec4((torus2p * m2), t * 1.0)) * m3 * bands.x * 3.;
-  torSize = vec2(0.6, 0.2 - r);
-  float d2 = sdTorus(torus2p, torSize);
-
-  if (d > d2) {
-    id = 0.5;
-  }
-
-  d = smin(d, d2, 20.);
-  // d = min(d, d2);
-
+  float d = b0;
+  d = min(b0, b1);
+  float id = 1.0;
   return vec2(d, id);
 }
 
@@ -206,14 +242,13 @@ void main() {
     // color = texture2D(spectrum, abs(vec2(0.5) - sample)).rgb * 2.;
 
     // color += (color - color2 * 0.1) * 2.7;
-
-    // if (luma(color) < 1.5 + noise3d(vec3(uv * 150., length(bands)))) {
-    color = max(color, color2);
   }
-
-  // } else {
-  // color = vec3(1.0);
-  // }
+  if (luma(color) < m1 + noise3d(vec3(uv * 150., t)) * m2) {
+    // color = max(color, color2);
+    color = vec3(0.);
+  } else {
+    color = vec3(1.0);
+  }
   gl_FragColor.rgb = color;
   gl_FragColor.a = 1.0;
 }
