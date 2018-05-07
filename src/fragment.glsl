@@ -97,58 +97,50 @@ vec3 opTwist(vec3 p) {
 }
 
 float bolt0(vec3 p) {
-  p = (vec4(p, 1.0) * rotateX(t)).xyz;
+  p = (vec4(p, 1.0) * rotateX(m0)).xyz;
   float r = 0.15;
-  float d = sdCappedCylinder(p, vec2(r));
+  float d = sdCappedCylinder(p, vec2(r, 0.9));
 
-  float d2 = sdBox(p, vec3(10., 1.0, 10.));
-  d = max(d, d2);
+  vec3 threadp = p;
+  threadp = (vec4(threadp, 1.0) * rotateY(p.y * 45.)).xyz;
 
-  vec3 threadp = p + vec3(-r, 0.1, -r);
-  threadp = (vec4(threadp, 1.0) * rotateY(p.y * 55.)).xyz;
+  d = smin(d, sdBox(threadp, vec3(0.1, 0.9, 0.1)), 30.);
 
-  d = smin(d, sdBox(threadp, vec3(0.1, 0.9, r + 0.01)), 30.);
-
-  vec3 hexp = (vec4(p + vec3(-r, -.9, -r), 1.0)).xzy;
+  vec3 hexp = (vec4(p + vec3(0, -.9, 0), 1.0)).xzy;
   float top = min(d, sdHexPrism(hexp, vec2(0.3, 0.15)));
 
   float dome = sdSphere((hexp + vec3(0., 0., -0.1)) * vec3(1., 1., 2.), 0.3);
   top = min(top, dome);
 
   d = min(top, d);
-  float neck = min(d, sdCylinder(p + vec3(0.05), vec3(r + 0.05)));
-  float d3 = sdBox(p + vec3(0., -0.6, 0.), vec3(10., 0.15, 10.));
-
-  neck = max(neck, d3);
+  float neck =
+      min(d, sdCappedCylinder(p + vec3(0., -0.6, 0.), vec2(r + 0.05, 0.15)));
   d = min(d, neck);
   return d;
 }
 
 float bolt1(vec3 p) {
-  p = (vec4(p, 1.0) * rotateY(t)).xyz;
-  float r = 0.15;
-  float d = sdCylinder(p, vec3(r));
+  p = (vec4(p, 1.0) * rotateZ(m0)).xyz;
+  p += vec3(0.4, 0., 0.);
+  float r = 0.12;
+  float d = sdCappedCylinder(p, vec2(r, 0.7));
 
-  float d2 = sdBox(p, vec3(10., 1.0, 10.));
-  d = max(d, d2);
+  vec3 threadp = p;
+  threadp = (vec4(threadp, 1.0) * rotateY(p.y * 45.)).xyz;
 
-  vec3 threadp = p + vec3(-r, 0.1, -r);
-  threadp = (vec4(threadp, 1.0) * rotateY(p.y * 55.)).xyz;
+  d = smin(d, sdBox(threadp, vec3(0.07, 0.7, 0.07)), 30.);
 
-  d = smin(d, sdBox(threadp, vec3(0.1, 0.9, r + 0.01)), 30.);
-
-  vec3 hexp = (vec4(p + vec3(-r, -.9, -r), 1.0)).xzy;
-  float top = min(d, sdHexPrism(hexp, vec2(0.3, 0.15)));
-
-  float dome = sdSphere((hexp + vec3(0., 0., -0.1)) * vec3(1., 1., 2.), 0.3);
-  top = min(top, dome);
-
-  d = min(top, d);
-  float neck = min(d, sdCylinder(p + vec3(0.05), vec3(r + 0.05)));
-  float d3 = sdBox(p + vec3(0., -0.6, 0.), vec3(10., 0.15, 10.));
-
-  neck = max(neck, d3);
+  float neck =
+      min(d, sdCappedCylinder(p + vec3(0., -0.5, 0.), vec2(r + 0.02, 0.20)));
   d = min(d, neck);
+
+  vec3 hexp = (vec4(p + vec3(0, -.7, 0), 1.0)).xzy;
+  float dome = sdSphere((hexp + vec3(0., 0., 0.)) * vec3(1., 1., 1.5), 0.25);
+  float top = sdPlane(p, normalize(vec4(0, -1.4, 0, 1.0)));
+  top = max(top, dome);
+  top = min(top, sdCappedCylinder(p + vec3(0., -0.69, 0.), vec2(0.25, 0.03)));
+  d = min(top, d);
+  d = max(d, -sdBox(p + vec3(0., -0.85, 0.0), vec3(0.04, 0.07, 0.8)));
   return d;
 }
 
@@ -156,9 +148,12 @@ vec2 doModel(vec3 p) {
   float b0 = bolt0(p);
   float b1 = bolt1(p);
 
+  float id = 1.0;
+  if (b0 < b1) {
+    id = 2.0;
+  }
   float d = b0;
   d = min(b0, b1);
-  float id = 1.0;
   return vec2(d, id);
 }
 
@@ -194,18 +189,6 @@ void main() {
   float colorBand = sin((t - uv.y * 25.) / 9.) + 1.0;
   float weight = 1.0;
 
-  vec2 polar;
-  polar.y = sqrt(uv.x * uv.x + uv.y * uv.y);
-  // polar.y /= resolution.x / 2.0;
-  polar.y = 1.0 - polar.y;
-  polar.x = atan(uv.y, uv.x);
-  polar.x -= 1.57079632679;
-  if (polar.x < 0.0) {
-    polar.x += 6.28318530718;
-  }
-  polar.x /= 6.28318530718;
-  polar.x = 1.0 - polar.x;
-
   vec3 ro, rd;
 
   float rotation = t * 1.0 * m6 * 0.1;
@@ -214,17 +197,17 @@ void main() {
 
   camera(rotation, height, dist, resolution.xy, ro, rd);
 
-  vec2 tr = raytrace(ro, rd);
+  vec2 tr = raytrace(ro, rd, 8., 0.0001);
   vec3 pos;
   vec3 nor;
-  if (tr.x > -0.9) {
+  if (tr.x > -0.09) {
     pos = ro + rd * tr.x;
     nor = normal(pos);
     color = lighting(pos, nor, ro, rd, tr.y);
 
     float l = luma(color);
     float s = 0.1 + (floor(l * m5) / m5);
-    color = hsv2rgb(vec3(m4 + tr.y + ((s - 0.5) * 0.5), s + 0.05, s));
+    color = hsv2rgb(vec3(m4 + tr.y / 5. + ((s - 0.5) * 0.5), s + 0.05, s));
 
   } else {
 
@@ -243,11 +226,12 @@ void main() {
 
     // color += (color - color2 * 0.1) * 2.7;
   }
-  if (luma(color) < m1 + noise3d(vec3(uv * 150., t)) * m2) {
+  if (luma(color) < 0.4 + noise3d(vec3(uv * 150., t)) * 0.25) {
     // color = max(color, color2);
     color = vec3(0.);
   } else {
     color = vec3(1.0);
+    color = hsv2rgb(vec3(tr.y / 5., 0.3, 0.9));
   }
   gl_FragColor.rgb = color;
   gl_FragColor.a = 1.0;
