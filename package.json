@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start":
-      "./node_modules/.bin/shader-reload-cli index.js:bundle.js --dir dist/ --cors"
+    "start": "./node_modules/.bin/shader-reload-cli index.js:bundle.js --dir dist/ --cors"
   },
   "author": "maxbittker <maxbittker@gmail.com> (maxbittker.github.io)",
   "license": "ISC",
@@ -21,6 +20,7 @@
     "glsl-sdf-normal": "^1.0.0",
     "glsl-sdf-ops": "^0.0.3",
     "glsl-sdf-primitives": "^0.0.1",
+    "glsl-smooth-min": "^1.0.0",
     "glsl-specular-gaussian": "^1.0.0",
     "glsl-turntable-camera": "^1.0.0",
     "glsl-worley": "^1.0.2",

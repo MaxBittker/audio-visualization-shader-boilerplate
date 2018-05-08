@@ -1296,6 +1296,10 @@ glsl-sdf-primitives@^0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/glsl-sdf-primitives/-/glsl-sdf-primitives-0.0.1.tgz#7a2faced950f10f272730c642b75834b35895e70"
 
+glsl-smooth-min@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/glsl-smooth-min/-/glsl-smooth-min-1.0.0.tgz#93f00a06675be789933676e9210cd597ad5b1c57"
+
 glsl-specular-gaussian@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/glsl-specular-gaussian/-/glsl-specular-gaussian-1.0.0.tgz#eb3f28ba0df7db306ebabafc194e28b090cac138"
@@ -1734,10 +1738,6 @@ isstream@~0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/isstream/-/isstream-0.1.2.tgz#47e63f7af55afa6f92e1500e690eb8b8529c099a"
 
-jazz-midi@^1.6.1:
-  version "1.6.1"
-  resolved "https://registry.yarnpkg.com/jazz-midi/-/jazz-midi-1.6.1.tgz#0459a10822bd4f0097a526aa962a63db088e82c6"
-
 jsbn@~0.1.0:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/jsbn/-/jsbn-0.1.1.tgz#a5e654c2e5a2deb5f201d96cefbca80c0ef2f513"
@@ -1783,12 +1783,6 @@ jsprim@^1.2.2:
     json-schema "0.2.3"
     verror "1.10.0"
 
-jzz@^0.4.6:
-  version "0.4.6"
-  resolved "https://registry.yarnpkg.com/jzz/-/jzz-0.4.6.tgz#7e5876d079e492433e377289feff352302751930"
-  dependencies:
-    jazz-midi "^1.6.1"
-
 kind-of@^3.0.2:
   version "3.2.2"
   resolved "https://registry.yarnpkg.com/kind-of/-/kind-of-3.2.2.tgz#31ea21a734bab9bbb0f32466d893aea51e4a3c64"
@@ -1810,13 +1804,6 @@ korg-nano-kontrol@^0.2.9:
     eventemitter2 "*"
     lodash "^4.0.0"
     midi "*"
-
-korg-nano@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/korg-nano/-/korg-nano-1.1.0.tgz#5fd593ed70552a1905503c50236502cfa2d561d3"
-  dependencies:
-    midi "^0.9.0"
-    wildemitter "^1.0.1"
 
 labeled-stream-splicer@^2.0.0:
   version "2.0.1"
@@ -1934,7 +1921,7 @@ micromatch@^2.1.5, micromatch@^2.2.0:
     parse-glob "^3.0.4"
     regex-cache "^0.4.2"
 
-midi@*, midi@^0.9.0:
+midi@*:
   version "0.9.5"
   resolved "https://registry.yarnpkg.com/midi/-/midi-0.9.5.tgz#fc323aff3e81b0d4099caeead535ba679c6e9d88"
   dependencies:
@@ -3204,12 +3191,6 @@ watchify@^3.3.1:
     through2 "^2.0.0"
     xtend "^4.0.0"
 
-web-midi-api@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/web-midi-api/-/web-midi-api-2.0.0.tgz#8c2c274d702a73c6e2a4b8714c958561c925cee5"
-  dependencies:
-    jzz "^0.4.6"
-
 webrtc-adapter@^2.0.2:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/webrtc-adapter/-/webrtc-adapter-2.1.0.tgz#612b5bc6ce8e73c9d0660038a21f9255a867bf3e"
@@ -3227,10 +3208,6 @@ wide-align@^1.1.0:
   resolved "https://registry.yarnpkg.com/wide-align/-/wide-align-1.1.2.tgz#571e0f1b0604636ebc0dfc21b0339bbe31341710"
   dependencies:
     string-width "^1.0.2"
-
-wildemitter@^1.0.1:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/wildemitter/-/wildemitter-1.2.0.tgz#29dd3a72d699c3e279dd021c3cd2150b82c9a211"
 
 wordwrap@~1.0.0:
   version "1.0.0"
