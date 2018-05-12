@@ -22,6 +22,7 @@ vec2 doModel(vec3 p);
 #pragma glslify: hsv2rgb = require('glsl-hsv2rgb')
 #pragma glslify: luma = require(glsl-luma)
 #pragma glslify: smin = require(glsl-smooth-min/exp)
+#pragma glslify: noise2d = require('glsl-noise/simplex/2d')
 #pragma glslify: noise3d = require('glsl-noise/simplex/3d')
 #pragma glslify: noise = require('glsl-fractal-brownian-noise/4d')
 #pragma glslify: noise4d = require('glsl-noise/simplex/4d')
@@ -103,7 +104,8 @@ vec3 opTwist(vec3 p) {
 }
 
 float bolt0(vec3 p) {
-  p = rotateX(p, t);
+  p = rotateY(p, t * 2.);
+  // p = rotateX(p, t);
   float r = 0.15;
   float d = sdCappedCylinder(p, vec2(r, 0.9));
 
@@ -126,8 +128,9 @@ float bolt0(vec3 p) {
 }
 
 float bolt1(vec3 p) {
-  p = rotateZ(p, t);
-  p += vec3(0.4, 0., 0.);
+  p += vec3(0.5, 0., 0.);
+  p = rotateY(p, t * 2.);
+  // p = rotateZ(p, t);
   float r = 0.12;
   float d = sdCappedCylinder(p, vec2(r, 0.7));
 
@@ -149,13 +152,16 @@ float bolt1(vec3 p) {
   top = min(top, sdCappedCylinder(p + vec3(0., -0.69, 0.), vec2(0.249, 0.03)));
 
   d = min(top, d);
-  d = -smin(-d, sdBox(p + vec3(0., -0.85, 0.0), vec3(0.04, 0.07, 0.8)), 99.);
+  float notch = sdBox(p + vec3(0., -0.85, 0.0), vec3(0.04, 0.07, 0.8));
+  d = max(d, -notch);
   return d;
 }
 
 float bolt2(vec3 p) {
-  p = rotateX(rotateY(p, t), 0.5);
-  p -= vec3(0.4, 0., 0.);
+  p -= vec3(0.5, 0.0, 0.5);
+  p = rotateY(p, t);
+  // p = rotateX(p, PI * noise2d(vec2(t * 0.5, 0.)));
+  // p = rotateX(p, PI * noise2d(vec2(t * 0.5, 0.)));
   float r = smin((p.y * 0.9) + 0.9, 0.5, 30.) * 0.2;
   float d = sdCappedCylinder(p, vec2(r, 1.0));
 
@@ -171,37 +177,47 @@ float bolt2(vec3 p) {
   d = min(d, neck);
 
   vec3 hexp = (vec4(p + vec3(0, -0.9, 0), 1.0)).xzy;
-  // float cone = sdCappedCone((hexp + vec3(0., 0., 0.)) * vec3(1., 1., 1.5),
-  // vec2(0.1, 0.2));
+
   float cone = sdCappedCone(rotateX(hexp, PI * 1.5), vec3(0.25, 0.27, 0.20));
-  float top = cone;
-
-  // top = min(top, sdCappedCylinder(p + vec3(0., -0.69, 0.), vec2(0.249,
-  // 0.03)));
-
-  d = min(top, d);
-  d = -smin(-d, sdBox(p + vec3(0., -1.09, 0.0), vec3(0.02, 0.04, 0.8)), 99.);
+  float notch = sdBox(p + vec3(0., -1.09, 0.0), vec3(0.02, 0.04, 0.8));
+  float top = max(cone, -notch);
+  d = min(d, top);
   return d;
 }
 
 vec2 doModel(vec3 p) {
-  float b0 = bolt1(p);
-  float b1 = bolt2(p);
-  float b2 = bolt0(p);
+  // p += noise4d(vec4(p * 20., t)) * 0.01;
+  p = rotateX(p, t);
+  p = rotateZ(p, t);
+  float b0 = bolt0(p);
+  p = rotateX(p, t);
+  float b1 = bolt1(p);
+  p = rotateZ(p, t);
+  float b2 = bolt2(p);
 
-  float d = b0;
+  float d = 1000.;
   float id = 1.0;
 
-  if (d > b1) {
-    id = 2.0;
-  }
-  d = min(b0, b1);
+  float f = mod(t * 10., 300.);
 
-  if (d > b2) {
-    id = 3.0;
+  if (f > 140.) {
+    d = min(d, b0);
   }
-  d = min(d, b2);
-  // d = b2;
+
+  if (f < 160.) {
+
+    if (d > b1) {
+      id = 2.0;
+    }
+    d = min(d, b1);
+  }
+  if (f < 40. || f > 260.) {
+    if (d > b2) {
+      id = 3.0;
+    }
+    d = min(d, b2);
+  }
+
   return vec2(d, id);
 }
 
@@ -227,8 +243,8 @@ vec3 lighting(vec3 pos, vec3 nor, vec3 ro, vec3 rd, float id) {
   vec3 dif2 = col2 * orenn(dir2, -rd, nor, 0.15, 1.0) * 1.0;
   vec3 spc2 = col2 * gauss(dir2, -rd, nor, 0.15) * 0.1;
 
-  // return vec3(0.01) + (dif1 + spc1 + ((dif2 + spc2) * occ));
-  return vec3(0.01) + (dif1 + spc1 + ((dif2 + spc2)));
+  return vec3(0.01) + (dif1 + spc1 + ((dif2 + spc2) * occ));
+  // return vec3(0.01) + (dif1 + spc1 + ((dif2 + spc2)));
 }
 
 void main() {
@@ -240,23 +256,35 @@ void main() {
 
   vec3 ro, rd;
 
-  float rotation = t * 2.;
+  float rotation = t;
   float height = 2.;
-  float dist = m2;
+  float dist = 2.;
 
   camera(rotation, height, dist, resolution.xy, ro, rd);
 
-  vec2 tr = raytrace(ro, rd, 10., 0.001);
+  vec2 tr = raytrace(ro, rd, 100., 0.0001);
   vec3 pos;
   vec3 nor;
-  if (tr.x > -0.09) {
+  if (tr.x > -0.9) {
     pos = ro + rd * tr.x;
     nor = normal(pos);
     color = lighting(pos, nor, ro, rd, tr.y);
 
     float l = luma(color);
-    float s = 0.1 + (floor(l * m5) / m5);
+    float s = 0.1 + (floor(l * 10.) / 10.);
     // color = hsv2rgb(vec3(m4 + tr.y / 5. + ((s - 0.5) * 0.5), s + 0.05, s));
+
+    // if (10. > 0.1) {
+
+    // if (luma(color) < 0.3 + (sin(uv.x * 1000.) + cos(uv.y * 1000.)) * 0.1) {
+    if (luma(color) < 0.3 + noise3d(vec3(uv * 250., t)) * 0.1) {
+      // color = max(color, color2);
+      color = vec3(0.);
+    } else {
+      // color = vec3(1.0);
+      color = hsv2rgb(vec3(tr.y / 5., 0.3, 0.9));
+    }
+    // }
 
   } else {
 
@@ -270,21 +298,15 @@ void main() {
         1.000 * (texture2D(backBuffer, sample).rgb * (1.0 - mix * 2.) +
                  texture2D(backBuffer, sample + randa).rgb * mix +
                  texture2D(backBuffer, sample - randa).rgb * mix);
-
+    vec3 backColor = texture2D(backBuffer, sample).rgb;
     // color = texture2D(spectrum, abs(vec2(0.5) - sample)).rgb * 2.;
 
-    // color += (color - color2 * 0.1) * 2.7;
-  }
-  if (m5 > 0.1) {
-
-    if (luma(color) < 0.3 + noise3d(vec3(uv * 150., t)) * 0.1) {
-      // color = max(color, color2);
-      color = vec3(0.);
-    } else {
-      color = vec3(1.0);
-      color = hsv2rgb(vec3(tr.y / 5., 0.3, 0.9));
+    // color = color2;
+    if (uv.y < 1.0 - pixel.y) {
+      color = backColor;
     }
   }
+
   gl_FragColor.rgb = color;
   gl_FragColor.a = 1.0;
 }
