@@ -19,6 +19,10 @@ float m7 = m[7];
 vec2 doModel(vec3 p);
 
 // clang-format off
+#pragma glslify: rotateX = require("./rotateX")
+#pragma glslify: rotateY = require("./rotateY")
+#pragma glslify: rotateZ = require("./rotateZ")
+
 #pragma glslify: hsv2rgb = require('glsl-hsv2rgb')
 #pragma glslify: luma = require(glsl-luma)
 #pragma glslify: smin = require(glsl-smooth-min/exp)
@@ -51,50 +55,6 @@ vec2 pixel = vec2(1.0) / resolution;
 #define PI 3.14159265359
 #define PHI (1.618033988749895)
 #define saturate(x) clamp(x, 0., 1.)
-
-// clang-format off
-
-mat4 rotateX_Mat(float theta) {
-  float c = cos(theta);
-  float s = sin(theta);
-  return mat4(
-   vec4(1, 0, 0, 0),
-   vec4(0, c, -s, 0),
-   vec4(0, s, c, 0),
-   vec4(0, 0, 0, 1));
-}
-
-mat4 rotateY_Mat(float theta) {
-  float c = cos(theta);
-  float s = sin(theta);
-  return mat4(
-   vec4(c, 0, s, 0),
-   vec4(0, 1, 0, 0),
-   vec4(-s, 0, c, 0),
-   vec4(0, 0, 0, 1));
-}
-
-
-mat4 rotateZ_Mat(float theta) {
-  float c = cos(theta);
-  float s = sin(theta);
-  return mat4(
-   vec4(c, -s, 0, 0),
-   vec4(s, c, 0, 0),
-   vec4(0, 0, 1, 0),
-   vec4(0, 0, 0, 1));
-}
-
-vec3 rotateX(vec3 p, float theta){
-  return (rotateX_Mat(theta) * vec4(p,1.0)).xyz;
-}
-vec3 rotateY(vec3 p, float theta){
-  return (rotateY_Mat(theta) * vec4(p,1.0)).xyz;
-}
-vec3 rotateZ(vec3 p, float theta){
-  return (rotateZ_Mat(theta) * vec4(p,1.0)).xyz;
-}
-// clang-format on
 
 vec3 opTwist(vec3 p) {
   float c = cos(10.0 * p.y + 10.0);
