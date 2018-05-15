@@ -95,12 +95,12 @@ vec2 doModel(vec3 p) {
   float h = 0.;
   // h = texture2D(spectrum, vec2((p.y * 0.1) + 0.4, 0.)).x * -0.1;
   // p;
-  float speed = m6;
+  float speed = m7;
   float id = 0.0;
   vec3 torus1p =
       (vec4(p + vec3(-0.3, 0., 0.), 1.0) * rotateZ(t * speed + bands.x)).xzy;
   r += noise4d(vec4(torus1p * m0, t * 1.0)) * m1;
-  r += noise4d(vec4((torus1p * m2), t * 1.0)) * m3 * bands.x * 3.;
+  r += noise4d(vec4((torus1p * m2), t * 1.0)) * m3;
   vec2 torSize = vec2(0.6, 0.2 - r);
   float d = sdTorus(torus1p, torSize);
 
@@ -108,13 +108,13 @@ vec2 doModel(vec3 p) {
   vec3 torus2p =
       (vec4(p.xzy + vec3(0.3, 0., 0.), 1.0) * rotateZ(t * speed + bands.y)).xzy;
 
-  r += noise4d(vec4(torus2p * m0, t * 1.0)) * m1;
-  r += noise4d(vec4((torus2p * m2), t * 1.0)) * m3 * bands.x * 3.;
+  r += noise4d(vec4(torus2p * m0, t * 1.0)) * m1 / 2.;
+  r += noise4d(vec4((torus2p * m2), t * 1.0)) * m3 * (1. + bands.x) / 2.;
   torSize = vec2(0.6, 0.2 - r);
   float d2 = sdTorus(torus2p, torSize);
 
   if (d > d2) {
-    id = m7;
+    id = m5;
   }
 
   d = smin(d, d2, 8.);
@@ -169,7 +169,7 @@ void main() {
 
   vec3 ro, rd;
 
-  float rotation = t * 1.0 * m6 * 0.1;
+  float rotation = t * 1.0 * m7 * 0.1;
   float height = 2.0;
   float dist = 2.0;
 
@@ -184,7 +184,7 @@ void main() {
     color = lighting(pos, nor, ro, rd, tr.y);
 
     float l = luma(color);
-    float s = 0.1 + (floor(l * m5) / m5);
+    float s = 0.1 + (floor(l * m6) / m6);
     color = hsv2rgb(vec3(m4 + tr.y + ((s - 0.5) * 0.5), s + 0.05, s));
 
   } else {
@@ -194,7 +194,7 @@ void main() {
     vec2 randa = vec2(sin(t * 2.0), cos(t * 2.)) * pixel;
     vec2 sample = textCoord + outward;
 
-    float mix = 0.3;
+    float mix = 0.2;
     vec3 color2 =
         1.000 * (texture2D(backBuffer, sample).rgb * (1.0 - mix * 2.) +
                  texture2D(backBuffer, sample + randa).rgb * mix +
@@ -205,7 +205,9 @@ void main() {
     // color += (color - color2 * 0.1) * 2.7;
 
     // if (luma(color) < 1.5 + noise3d(vec3(uv * 150., length(bands)))) {
-    color = max(color, color2);
+    if (uv.y < 1. - pixel.y) {
+      color = max(color, color2);
+    }
   }
 
   // } else {

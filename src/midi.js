@@ -60,13 +60,13 @@ function getMidiValue(n) {
   value = knob * slider;
 
   if (s) {
-    value /= 10;
+    // value /= 10;
   }
   if (m) {
-    value *= 10;
+    // value *= 10;
   }
   if (r) {
-    value = 0;
+    // value = 0;
   }
 
   if (n == 0) {
