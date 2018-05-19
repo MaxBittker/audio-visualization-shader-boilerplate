@@ -14,6 +14,7 @@ let audioBuffer = null;
 let vert = shaders.vertex;
 let frag = shaders.fragment;
 
+
 shaders.on("change", () => {
   console.log("update");
   vert = shaders.vertex;
@@ -111,3 +112,5 @@ let audio = audioAnalyzer({
   regl,
   done: audioVisualization
 });
+
+document.querySelector("canvas").style.imageRendering = "pixelated";
