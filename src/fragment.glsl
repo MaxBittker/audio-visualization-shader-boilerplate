@@ -16,6 +16,7 @@ float m4 = m[4];
 float m5 = m[5];
 float m6 = m[6];
 float m7 = m[7];
+
 vec2 doModel(vec3 p);
 
 // clang-format off
@@ -95,11 +96,19 @@ vec2 doModel(vec3 p) {
   float h = 0.;
   // h = texture2D(spectrum, vec2((p.y * 0.1) + 0.4, 0.)).x * -0.1;
   // p;
-  float speed = m7;
+  m7 = 2.0;
+
+  m0 = 2.0;
+  m1 = 0.2 * bands.z;
+  m2 = 40.;
+  m3 = 0.01;
+
+  m4 = 0.010;
+  float speed = 3.;
   float id = 0.0;
   vec3 torus1p =
       (vec4(p + vec3(-0.3, 0., 0.), 1.0) * rotateZ(t * speed + bands.x)).xzy;
-  r += noise4d(vec4(torus1p * m0, t * 1.0)) * m1;
+  r += noise4d(vec4(torus1p * m0, t * 1.0 + bands.x)) * m1;
   r += noise4d(vec4((torus1p * m2), t * 1.0)) * m3;
   vec2 torSize = vec2(0.6, 0.2 - r);
   float d = sdTorus(torus1p, torSize);
@@ -108,13 +117,13 @@ vec2 doModel(vec3 p) {
   vec3 torus2p =
       (vec4(p.xzy + vec3(0.3, 0., 0.), 1.0) * rotateZ(t * speed + bands.y)).xzy;
 
-  r += noise4d(vec4(torus2p * m0, t * 1.0)) * m1 / 2.;
-  r += noise4d(vec4((torus2p * m2), t * 1.0)) * m3 * (1. + bands.x) / 2.;
+  r += noise4d(vec4(torus2p * m0, t * 1.0 + bands.x)) * m1 / 2.;
+  r += noise4d(vec4((torus2p * m2), t * 1.0)) * m3 * bands.x / 2.;
   torSize = vec2(0.6, 0.2 - r);
   float d2 = sdTorus(torus2p, torSize);
 
   if (d > d2) {
-    id = m5;
+    id = 0.5;
   }
 
   d = smin(d, d2, 8.);
@@ -169,12 +178,12 @@ void main() {
 
   vec3 ro, rd;
 
-  float rotation = t * 1.0 * m7 * 0.1;
+  float rotation = t * 1.0 * 0.1;
   float height = 2.0;
   float dist = 2.0;
 
   camera(rotation, height, dist, resolution.xy, ro, rd);
-
+  m6 = 3.0;
   vec2 tr = raytrace(ro, rd);
   vec3 pos;
   vec3 nor;
@@ -205,11 +214,11 @@ void main() {
     // color += (color - color2 * 0.1) * 2.7;
 
     // if (luma(color) < 1.5 + noise3d(vec3(uv * 150., length(bands)))) {
-    if (uv.y < 1. - pixel.y) {
+    if (uv.y < 1. - pixel.y * 2.) {
       color = max(color, color2);
     }
   }
-
+  // color = bands.xyz;
   // } else {
   // color = vec3(1.0);
   // }

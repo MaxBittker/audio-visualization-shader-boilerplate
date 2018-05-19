@@ -72,6 +72,6 @@ function getMidiValue(n) {
   if (n == 0) {
     // console.log(value);
   }
-  return value;
+  return 1.0;
 }
 module.exports = { getMidiValue };
