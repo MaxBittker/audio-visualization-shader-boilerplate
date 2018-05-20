@@ -117,7 +117,8 @@ float bolt1(vec3 p) {
   return d;
 }
 
-float bolt2(vec3 p) {
+float bolt2(vec3 pos) {
+  vec3 p = pos.xyz;
   p -= vec3(0.5, 0.0, 0.5);
   p = rotateY(p, t);
   // p = rotateX(p, PI * noise2d(vec2(t * 0.5, 0.)));
@@ -146,6 +147,17 @@ float bolt2(vec3 p) {
 }
 
 vec2 doModel(vec3 p) {
+  float g = 1.;
+  float g2 = g * 2.;
+  // p *= 2.;
+  // p = mod(p, vec3(g2, g2, 0.));
+  // p -= vec3(g, g, 0.);
+
+  // p += vec3(sin(t + p.y * 10.) * 0.1, 0., 0.);
+  float r = g - 0.1;
+  r += noise4d(vec4(p * 2., t)) * 0.1;
+  float d = sdSphere(p, r);
+  return vec2(d, 1.0);
   // p += noise4d(vec4(p * 20., t)) * 0.01;
   p = rotateX(p, t);
   p = rotateZ(p, t);
@@ -155,7 +167,7 @@ vec2 doModel(vec3 p) {
   p = rotateZ(p, t);
   float b2 = bolt2(p);
 
-  float d = 1000.;
+  // float d = 1000.;
   float id = 1.0;
 
   float f = mod(t * 10., 300.);
@@ -184,7 +196,7 @@ vec2 doModel(vec3 p) {
 vec3 lighting(vec3 pos, vec3 nor, vec3 ro, vec3 rd, float id) {
   float occ = calcAO(pos, nor);
 
-  vec3 dir1 = normalize(vec3(1.));
+  vec3 dir1 = normalize(vec3(sin(t), cos(t), sin(t)));
   vec3 col1 = hsv2rgb(vec3(0.9 * id, 0.5, 1.0));
 
   // float grain = noise4d(vec4(nor * 80., t)) * 0.2;
@@ -216,9 +228,9 @@ void main() {
 
   vec3 ro, rd;
 
-  float rotation = t;
-  float height = 2.;
-  float dist = 2.;
+  float rotation = 0.;
+  float height = 0.0;
+  float dist = 3.;
 
   camera(rotation, height, dist, resolution.xy, ro, rd);
 
@@ -232,40 +244,41 @@ void main() {
 
     float l = luma(color);
     float s = 0.1 + (floor(l * 10.) / 10.);
-    // color = hsv2rgb(vec3(m4 + tr.y / 5. + ((s - 0.5) * 0.5), s + 0.05, s));
+    color = hsv2rgb(vec3(tr.y / 5. + ((s - 0.5) * 0.5), s + 0.05, s));
 
     // if (10. > 0.1) {
 
     // if (luma(color) < 0.3 + (sin(uv.x * 1000.) + cos(uv.y * 1000.)) * 0.1) {
-    if (luma(color) < 0.3 + noise3d(vec3(uv * 250., t)) * 0.1) {
+    if (luma(color) < 0.4 + noise3d(vec3(uv * 250., t * 0.1)) * 0.3) {
       // color = max(color, color2);
       color = vec3(0.);
     } else {
       // color = vec3(1.0);
-      color = hsv2rgb(vec3(tr.y / 5., 0.3, 0.9));
+      color = hsv2rgb(vec3(t + (tr.y / 5.), 0.3, 0.9));
     }
     // }
-
-  } else {
-
-    vec2 outward = normalize(vec2(0.0) - uv) * pixel * 2.;
-    outward = vec2(0., 1.0) * pixel;
-    vec2 randa = vec2(sin(t * 2.0), cos(t * 2.)) * pixel;
-    vec2 sample = textCoord + outward;
-
-    float mix = 0.2;
-    vec3 color2 =
-        1.000 * (texture2D(backBuffer, sample).rgb * (1.0 - mix * 2.) +
-                 texture2D(backBuffer, sample + randa).rgb * mix +
-                 texture2D(backBuffer, sample - randa).rgb * mix);
-    vec3 backColor = texture2D(backBuffer, sample).rgb;
-    // color = texture2D(spectrum, abs(vec2(0.5) - sample)).rgb * 2.;
-
-    // color = color2;
-    if (uv.y < 1.0 - pixel.y) {
-      color = backColor;
-    }
   }
+  // else
+  //  {
+
+  vec2 outward = normalize(vec2(0.0) - uv) * pixel * 2.5 * sin(t + uv.x);
+  // outward = vec2(0., 1.0) * pixel;
+  vec2 randa = normalize(vec2(sin(t * 20.0), cos(t * 20.))) * pixel;
+  vec2 sample = textCoord + vec2(pixel.x, 0.);
+
+  // float mix = 0.2;
+  // vec3 color2 =
+  // 1.000 * (texture2D(backBuffer, sample).rgb * (1.0 - mix * 2.) +
+  //          texture2D(backBuffer, sample + randa).rgb * mix +
+  //          texture2D(backBuffer, sample - randa).rgb * mix);
+  vec3 backColor = texture2D(backBuffer, sample).rgb;
+  // color = texture2D(spectrum, abs(vec2(0.5) - sample)).rgb * 2.;
+
+  // color = color2;
+  // if (uv.y < 0.1 - pixel.y * 2.) {
+  color = max(backColor * 0.99, color);
+  // }
+  // }
 
   gl_FragColor.rgb = color;
   gl_FragColor.a = 1.0;
