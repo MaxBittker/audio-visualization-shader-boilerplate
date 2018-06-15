@@ -19,6 +19,7 @@ float m7 = m[7];
 vec2 doModel(vec3 p);
 
 // clang-format off
+#pragma glslify: squareFrame = require("glsl-square-frame")
 #pragma glslify: rotateX = require("./rotateX")
 #pragma glslify: rotateY = require("./rotateY")
 #pragma glslify: rotateZ = require("./rotateZ")
@@ -220,66 +221,43 @@ vec3 lighting(vec3 pos, vec3 nor, vec3 ro, vec3 rd, float id) {
 }
 
 void main() {
-
+  vec2 pos = squareFrame(resolution);
   vec3 color;
-  vec2 textCoord = uv * 0.5 + vec2(0.5);
   float colorBand = sin((t - uv.y * 25.) / 9.) + 1.0;
-  float weight = 1.0;
+  pos.y += t * 0.1;
+  pos = mod(abs(pos), 0.4);
+  pos *= 2.;
+  color = vec3(1.0, 0.9, 0.8) * (0.6 + sin(uv.y * 500.) * 0.2);
+  float a = 3.145 * 0.25;
+  float s = 0.2;
+  vec3 weft = vec3(0.1, 0.2, 0.3);
+  if (abs(pos.x + s * 13. / 8.) > s * 17. / 8.) {
 
-  vec3 ro, rd;
-
-  float rotation = 0.;
-  float height = 0.0;
-  float dist = 3.;
-
-  camera(rotation, height, dist, resolution.xy, ro, rd);
-
-  vec2 tr = raytrace(ro, rd, 100., 0.0001);
-  vec3 pos;
-  vec3 nor;
-  if (tr.x > -0.9) {
-    pos = ro + rd * tr.x;
-    nor = normal(pos);
-    color = lighting(pos, nor, ro, rd, tr.y);
-
-    float l = luma(color);
-    float s = 0.1 + (floor(l * 10.) / 10.);
-    color = hsv2rgb(vec3(tr.y / 5. + ((s - 0.5) * 0.5), s + 0.05, s));
-
-    // if (10. > 0.1) {
-
-    // if (luma(color) < 0.3 + (sin(uv.x * 1000.) + cos(uv.y * 1000.)) * 0.1) {
-    if (luma(color) < 0.4 + noise3d(vec3(uv * 250., t * 0.1)) * 0.3) {
-      // color = max(color, color2);
-      color = vec3(0.);
+    if (mod(pos.x, s * 0.5) > s * 0.25) {
+      weft = vec3(0.5, 0.2, 0.3);
     } else {
-      // color = vec3(1.0);
-      color = hsv2rgb(vec3(t + (tr.y / 5.), 0.3, 0.9));
+      weft = vec3(0.8, 0.5, 0.3);
     }
-    // }
   }
-  // else
-  //  {
 
-  vec2 outward = normalize(vec2(0.0) - uv) * pixel * 2.5 * sin(t + uv.x);
-  // outward = vec2(0., 1.0) * pixel;
-  vec2 randa = normalize(vec2(sin(t * 20.0), cos(t * 20.))) * pixel;
-  vec2 sample = textCoord + vec2(pixel.x, 0.);
+  if (pos.x > s * 14. / 8.) {
+    weft = vec3(0.9);
+  }
 
-  // float mix = 0.2;
-  // vec3 color2 =
-  // 1.000 * (texture2D(backBuffer, sample).rgb * (1.0 - mix * 2.) +
-  //          texture2D(backBuffer, sample + randa).rgb * mix +
-  //          texture2D(backBuffer, sample - randa).rgb * mix);
-  vec3 backColor = texture2D(backBuffer, sample).rgb;
-  // color = texture2D(spectrum, abs(vec2(0.5) - sample)).rgb * 2.;
+  weft *= (0.9 + sin(uv.x * 600.) * 0.2);
+  // pos += vec2(0., noise2d(vec2(0., pos.y * 10.)) * 0.01);
+  vec2 uv45 =
+      vec2(pos.x * cos(a) - pos.y * sin(a), pos.x * sin(a) + pos.y * cos(a));
 
-  // color = color2;
-  // if (uv.y < 0.1 - pixel.y * 2.) {
-  color = max(backColor * 0.99, color);
-  // }
-  // }
+  // vec2 ruv = mod(abs(pos), 0.2);
 
+  // uv45 += noise3d(vec3(uv45 * 20., t)) * s * 0.025;
+  vec2 ruv = mod(uv45, s);
+  // vec2 ruv = abs(pos);
+  ruv = abs(ruv - s * 0.5);
+  if (sin(max(ruv.x, ruv.y) * s * 700.) > -s + 0.3) {
+    color = weft;
+  }
   gl_FragColor.rgb = color;
   gl_FragColor.a = 1.0;
 }
