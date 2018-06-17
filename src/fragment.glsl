@@ -224,38 +224,42 @@ void main() {
   vec2 pos = squareFrame(resolution);
   vec3 color;
   float colorBand = sin((t - uv.y * 25.) / 9.) + 1.0;
-  pos.y += t * 0.1;
-  pos = mod(abs(pos), 0.4);
-  pos *= 2.;
-  color = vec3(1.0, 0.9, 0.8) * (0.6 + sin(uv.y * 500.) * 0.2);
-  float a = 3.145 * 0.25;
-  float s = 0.2;
-  vec3 weft = vec3(0.1, 0.2, 0.3);
-  if (abs(pos.x + s * 13. / 8.) > s * 17. / 8.) {
 
-    if (mod(pos.x, s * 0.5) > s * 0.25) {
-      weft = vec3(0.5, 0.2, 0.3);
-    } else {
-      weft = vec3(0.8, 0.5, 0.3);
-    }
-  }
+  color = vec3(.0, 0.1, 0.1);
+  float a = PI * 0.25;
+  float s = 0.05;
+  vec3 weft = vec3(0.1, 0.9, 0.3);
 
-  if (pos.x > s * 14. / 8.) {
-    weft = vec3(0.9);
-  }
-
-  weft *= (0.9 + sin(uv.x * 600.) * 0.2);
   // pos += vec2(0., noise2d(vec2(0., pos.y * 10.)) * 0.01);
-  vec2 uv45 =
-      vec2(pos.x * cos(a) - pos.y * sin(a), pos.x * sin(a) + pos.y * cos(a));
 
   // vec2 ruv = mod(abs(pos), 0.2);
 
-  // uv45 += noise3d(vec3(uv45 * 20., t)) * s * 0.025;
-  vec2 ruv = mod(uv45, s);
+  // pos += noise3d(vec3(pos * 20., t)) * s * 0.1;
+  vec2 ruv = mod(pos, s * 2.);
+  pos += vec2(s * 0.75);
+  vec2 posr = mod(pos, s * 2.);
+  vec2 uv45 = vec2(posr.x * cos(a) - posr.y * sin(a),
+                   posr.x * sin(a) + posr.y * cos(a));
+
+  uv45 -= vec2(0., s * 1.40);
+  uv45 = abs(uv45);
   // vec2 ruv = abs(pos);
-  ruv = abs(ruv - s * 0.5);
-  if (sin(max(ruv.x, ruv.y) * s * 700.) > -s + 0.3) {
+  ruv = abs(ruv - s * 2.);
+  // vec2 rotpos =
+  vec2 cellloc = pos + vec2(s, s);
+  cellloc += uv45;
+  cellloc = floor(cellloc / (s * 2.));
+  cellloc.y *= 2.;
+  if (ruv.y - ruv.x > 0. * s) {
+    cellloc.y += 1.;
+  }
+  float cellI = cellloc.x + (cellloc.y * 4. * 13.);
+  // weft = hsv2rgb(vec3(cellI * 0.25, 0.5, 0.5));
+  if (noise3d(vec3(cellloc - vec2(0., -t * 2.), t * 1.) * 0.95) < 0.4) {
+    weft *= 0.25;
+  }
+  // if
+  if (max(ruv.x, ruv.y) > s * 1.5 && min(uv45.x, uv45.y) > s * 0.1) {
     color = weft;
   }
   gl_FragColor.rgb = color;
