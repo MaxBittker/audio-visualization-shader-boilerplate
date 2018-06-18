@@ -227,7 +227,7 @@ void main() {
 
   color = vec3(.0, 0.1, 0.1);
   float a = PI * 0.25;
-  float s = 0.05;
+  float s = 0.04 * bands.y;
   vec3 weft = vec3(0.1, 0.9, 0.3);
 
   // pos += vec2(0., noise2d(vec2(0., pos.y * 10.)) * 0.01);
@@ -249,14 +249,38 @@ void main() {
   vec2 cellloc = pos + vec2(s, s);
   cellloc += uv45;
   cellloc = floor(cellloc / (s * 2.));
-  cellloc.y *= 2.;
-  if (ruv.y - ruv.x > 0. * s) {
-    cellloc.y += 1.;
+
+  if (ruv.y - ruv.x > 0.) {
+    cellloc.y += 0.5;
   }
-  float cellI = cellloc.x + (cellloc.y * 4. * 13.);
+  // cellloc.y *= 0.5;
+  // cellloc += bands.xy;
+  // float cellI = cellloc.x + (cellloc.y * 4. * 13.);
   // weft = hsv2rgb(vec3(cellI * 0.25, 0.5, 0.5));
-  if (noise3d(vec3(cellloc - vec2(0., -t * 2.), t * 1.) * 0.95) < 0.4) {
-    weft *= 0.25;
+  float d = 10000.;
+  for (float i = 0.; i < 10.; i++) {
+    // i += bands.x;
+    vec2 ball_pos = vec2(noise2d(vec2(t + i * 20.)),
+                         noise2d(vec2(t + i * 200. + vec2(100.))));
+    ball_pos += vec2(sin(t * 10. + i), cos(t * 10. + i));
+    // d = cellloc.x - ;
+    float bd = length(cellloc * 0.1 - ball_pos * 1.0 * bands.x);
+    d = smin(d, bd, 7.5);
+    // d = min(d, bd);
+  }
+  // float n = noise3d(vec3(cellloc * 0.15 - vec2(0., -t * 0.90), t * 0.9) *
+  // 0.95);
+  weft = hsv2rgb(vec3(d * 0.1, 0.0, 1.));
+  if (d > 0.4) {
+    weft *= 0.15;
+  } else if (d > 0.2) {
+    weft *= 0.2;
+  }
+  cellloc += bands.yw;
+  cellloc.y += (t + bands.x) * 20.;
+  if (mod(cellloc.x + sin(cellloc.y * 0.5) * 4. + t * 2., 10.) < 7.) {
+
+    // weft *= 0.25;
   }
   // if
   if (max(ruv.x, ruv.y) > s * 1.5 && min(uv45.x, uv45.y) > s * 0.1) {
