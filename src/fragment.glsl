@@ -227,7 +227,7 @@ void main() {
 
   color = vec3(.0, 0.1, 0.1);
   float a = PI * 0.25;
-  float s = 0.04 * bands.y;
+  float s = 0.02;
   vec3 weft = vec3(0.1, 0.9, 0.3);
 
   // pos += vec2(0., noise2d(vec2(0., pos.y * 10.)) * 0.01);
@@ -258,23 +258,23 @@ void main() {
   // float cellI = cellloc.x + (cellloc.y * 4. * 13.);
   // weft = hsv2rgb(vec3(cellI * 0.25, 0.5, 0.5));
   float d = 10000.;
-  for (float i = 0.; i < 10.; i++) {
+  for (float i = 0.; i < 7.; i++) {
     // i += bands.x;
     vec2 ball_pos = vec2(noise2d(vec2(t + i * 20.)),
                          noise2d(vec2(t + i * 200. + vec2(100.))));
     ball_pos += vec2(sin(t * 10. + i), cos(t * 10. + i));
     // d = cellloc.x - ;
-    float bd = length(cellloc * 0.1 - ball_pos * 1.0 * bands.x);
+    float bd = length(cellloc * 0.1 - ball_pos * 1.0);
     d = smin(d, bd, 7.5);
     // d = min(d, bd);
   }
   // float n = noise3d(vec3(cellloc * 0.15 - vec2(0., -t * 0.90), t * 0.9) *
   // 0.95);
-  weft = hsv2rgb(vec3(d * 0.1, 0.0, 1.));
+  weft = hsv2rgb(vec3(0.4, 0.8, 1.));
   if (d > 0.4) {
     weft *= 0.15;
   } else if (d > 0.2) {
-    weft *= 0.2;
+    // weft *= 0.2;
   }
   cellloc += bands.yw;
   cellloc.y += (t + bands.x) * 20.;
