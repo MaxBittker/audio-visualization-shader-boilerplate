@@ -1795,14 +1795,13 @@ kind-of@^4.0.0:
   dependencies:
     is-buffer "^1.1.5"
 
-korg-nano-kontrol@^0.2.9:
+korg-nano-kontrol@maxbittker/korg-nano-kontrol:
   version "0.2.9"
-  resolved "https://registry.yarnpkg.com/korg-nano-kontrol/-/korg-nano-kontrol-0.2.9.tgz#6fa1ea3d7f1028d9292e78c6e210685f1e87aa4b"
+  resolved "https://codeload.github.com/maxbittker/korg-nano-kontrol/tar.gz/59f4b8c5f0aba1061b7722119d0488984a12fb44"
   dependencies:
     debug "*"
     es6-promise "*"
     eventemitter2 "*"
-    lodash "^4.0.0"
     midi "*"
 
 labeled-stream-splicer@^2.0.0:
@@ -1839,10 +1838,6 @@ load-json-file@^1.0.0:
 lodash.memoize@~3.0.3:
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/lodash.memoize/-/lodash.memoize-3.0.4.tgz#2dcbd2c287cbc0a55cc42328bd0c736150d53e3f"
-
-lodash@^4.0.0, lodash@^4.17.5:
-  version "4.17.5"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.5.tgz#99a92d65c0272debe8c96b6057bc8fbfa3bed511"
 
 loud-rejection@^1.0.0:
   version "1.6.0"

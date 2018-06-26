@@ -1,18 +1,15 @@
 let nanoKONTROL = require("korg-nano-kontrol");
-let _ = require("lodash");
-let data = _.fromPairs(
-  _.range(8).map(i => [
-    i,
-    {
-      knob: 0,
-      slider: 0,
-      s: false,
-      m: false,
-      r: false
-    }
-  ])
-);
 
+let data = {};
+for (var i = 0; i < 8; i++) {
+  data[i] = {
+    knob: 0,
+    slider: 0,
+    s: false,
+    m: false,
+    r: false
+  };
+}
 nanoKONTROL
   .connect()
   .then(function(device) {
@@ -69,9 +66,6 @@ function getMidiValue(n) {
     value = 0;
   }
 
-  if (n == 0) {
-    // console.log(value);
-  }
   return value;
 }
 module.exports = { getMidiValue };

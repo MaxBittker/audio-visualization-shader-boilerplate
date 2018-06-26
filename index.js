@@ -1,6 +1,19 @@
 let { setupOverlay } = require("regl-shader-error-overlay");
-let _ = require("lodash");
+
 setupOverlay();
+function flatMap(arr, mapFunc) {
+  const result = [];
+  for (const [index, elem] of arr.entries()) {
+    const x = mapFunc(elem, index, arr);
+    // We allow mapFunc() to return non-Arrays
+    if (Array.isArray(x)) {
+      result.push(...x);
+    } else {
+      result.push(x);
+    }
+  }
+  return result;
+}
 
 const regl = require("regl")({ pixelRatio: 1.2 });
 let { audioAnalyzer } = require("./src/audio");
@@ -13,7 +26,6 @@ let audioBuffer = null;
 
 let vert = shaders.vertex;
 let frag = shaders.fragment;
-
 
 shaders.on("change", () => {
   console.log("update");
@@ -60,7 +72,7 @@ let audioVisualization = (audio, {}) => {
         return regl.texture({
           width: audioBuffer.length,
           height: 1,
-          data: new Uint8Array(_.flatMap(audioBuffer, i => [i, i, i, i]))
+          data: new Uint8Array(flatMap(audioBuffer, i => [i, i, i, i]))
         });
       },
       t: ({ tick }) => tick / 100,

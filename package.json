@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "./node_modules/.bin/shader-reload-cli index.js:bundle.js --dir dist/ --cors"
+    "start": "./node_modules/.bin/shader-reload-cli index.js:bundle.js --no-debug --dir dist/ --cors"
   },
   "author": "maxbittker <maxbittker@gmail.com> (maxbittker.github.io)",
   "license": "ISC",
@@ -24,8 +24,7 @@
     "glsl-specular-gaussian": "^1.0.0",
     "glsl-turntable-camera": "^1.0.0",
     "glsl-worley": "^1.0.2",
-    "korg-nano-kontrol": "^0.2.9",
-    "lodash": "^4.17.5",
+    "korg-nano-kontrol": "maxbittker/korg-nano-kontrol",
     "regl": "^1.3.1",
     "regl-shader-error-overlay": "1.1.0",
     "shader-reload-cli": "^1.0.0"

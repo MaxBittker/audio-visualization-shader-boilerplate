@@ -30,8 +30,8 @@ vec2 doModel(vec3 p);
 #pragma glslify: noise2d = require('glsl-noise/simplex/2d')
 #pragma glslify: noise3d = require('glsl-noise/simplex/3d')
 #pragma glslify: noise = require('glsl-fractal-brownian-noise/4d')
-#pragma glslify: noise4d = require('glsl-noise/simplex/4d')
 #pragma glslify: worley3D = require(glsl-worley/worley3D.glsl)
+#pragma glslify: noise4d = require('glsl-noise/simplex/4d')
 #pragma glslify: raytrace = require('glsl-raytrace', map = doModel, steps = 90)
 #pragma glslify: normal = require('glsl-sdf-normal', map = doModel)
 #pragma glslify: camera = require('glsl-turntable-camera')
@@ -153,52 +153,54 @@ vec2 doModel(vec3 p) {
   // p *= 2.;
   // p = mod(p, vec3(g2, g2, 0.));
   // p -= vec3(g, g, 0.);
-
   // p += vec3(sin(t + p.y * 10.) * 0.1, 0., 0.);
   float r = g - 0.1;
-  r += noise4d(vec4(p * 2., t)) * 0.1;
-  float d = sdSphere(p, r);
-  return vec2(d, 1.0);
-  // p += noise4d(vec4(p * 20., t)) * 0.01;
-  p = rotateX(p, t);
-  p = rotateZ(p, t);
-  float b0 = bolt0(p);
-  p = rotateX(p, t);
-  float b1 = bolt1(p);
-  p = rotateZ(p, t);
-  float b2 = bolt2(p);
+  float n1 = worley3D(p * m0 + vec3(t * m7), 1.0, false).x * m1;
+  float n2 = n1 - m2 * (1.0 + (noise4d(vec4(p * m4, t)) * m5));
+  // float d = sdPlane(p, normalize(vec4(0, 1.0 + r, 0, 1.0)));
+  float d = length(p) - r * 1.2;
+  d = max(d, -n2);
+  return vec2(d, n1);
+  // // p += noise4d(vec4(p * 20., t)) * 0.01;
+  // p = rotateX(p, t);
+  // p = rotateZ(p, t);
+  // float b0 = bolt0(p);
+  // p = rotateX(p, t);
+  // float b1 = bolt1(p);
+  // p = rotateZ(p, t);
+  // float b2 = bolt2(p);
 
-  // float d = 1000.;
-  float id = 1.0;
+  // // float d = 1000.;
+  // float id = 1.0;
 
-  float f = mod(t * 10., 300.);
+  // float f = mod(t * 10., 300.);
 
-  if (f > 140.) {
-    d = min(d, b0);
-  }
+  // if (f > 140.) {
+  //   d = min(d, b0);
+  // }
 
-  if (f < 160.) {
+  // if (f < 160.) {
 
-    if (d > b1) {
-      id = 2.0;
-    }
-    d = min(d, b1);
-  }
-  if (f < 40. || f > 260.) {
-    if (d > b2) {
-      id = 3.0;
-    }
-    d = min(d, b2);
-  }
+  //   if (d > b1) {
+  //     id = 2.0;
+  //   }
+  //   d = min(d, b1);
+  // }
+  // if (f < 40. || f > 260.) {
+  //   if (d > b2) {
+  //     id = 3.0;
+  //   }
+  //   d = min(d, b2);
+  // }
 
-  return vec2(d, id);
+  // return vec2(d, id);
 }
 
 vec3 lighting(vec3 pos, vec3 nor, vec3 ro, vec3 rd, float id) {
   float occ = calcAO(pos, nor);
 
   vec3 dir1 = normalize(vec3(sin(t), cos(t), sin(t)));
-  vec3 col1 = hsv2rgb(vec3(0.9 * id, 0.5, 1.0));
+  vec3 col1 = hsv2rgb(vec3(0.9 * id * 5., 0.5, 1.0));
 
   // float grain = noise4d(vec4(nor * 80., t)) * 0.2;
 
@@ -216,75 +218,46 @@ vec3 lighting(vec3 pos, vec3 nor, vec3 ro, vec3 rd, float id) {
   vec3 dif2 = col2 * orenn(dir2, -rd, nor, 0.15, 1.0) * 1.0;
   vec3 spc2 = col2 * gauss(dir2, -rd, nor, 0.15) * 0.1;
 
-  return vec3(0.01) + (dif1 + spc1 + ((dif2 + spc2) * occ));
-  // return vec3(0.01) + (dif1 + spc1 + ((dif2 + spc2)));
+  // return vec3(0.01) + (dif1 + spc1 + ((dif2 + spc2) * occ));
+  return vec3(0.01) + (dif1 + spc1 + ((dif2 + spc2)));
 }
 
 void main() {
-  vec2 pos = squareFrame(resolution);
   vec3 color;
   float colorBand = sin((t - uv.y * 25.) / 9.) + 1.0;
 
   color = vec3(.0, 0.1, 0.1);
-  float a = PI * 0.25;
-  float s = 0.02;
-  vec3 weft = vec3(0.1, 0.9, 0.3);
 
-  // pos += vec2(0., noise2d(vec2(0., pos.y * 10.)) * 0.01);
+  vec3 ro, rd;
 
-  // vec2 ruv = mod(abs(pos), 0.2);
+  float rotation = t;
+  float height = 0.0;
+  float dist = 3.;
 
-  // pos += noise3d(vec3(pos * 20., t)) * s * 0.1;
-  vec2 ruv = mod(pos, s * 2.);
-  pos += vec2(s * 0.75);
-  vec2 posr = mod(pos, s * 2.);
-  vec2 uv45 = vec2(posr.x * cos(a) - posr.y * sin(a),
-                   posr.x * sin(a) + posr.y * cos(a));
+  camera(rotation, height, dist, resolution.xy, ro, rd);
+  vec2 tr = raytrace(ro, rd, 100., 0.0001);
+  vec3 pos;
+  vec3 nor;
 
-  uv45 -= vec2(0., s * 1.40);
-  uv45 = abs(uv45);
-  // vec2 ruv = abs(pos);
-  ruv = abs(ruv - s * 2.);
-  // vec2 rotpos =
-  vec2 cellloc = pos + vec2(s, s);
-  cellloc += uv45;
-  cellloc = floor(cellloc / (s * 2.));
+  if (tr.x > -0.9) {
+    pos = ro + rd * tr.x;
+    nor = normal(pos);
+    color = lighting(pos, nor, ro, rd, tr.y);
 
-  if (ruv.y - ruv.x > 0.) {
-    cellloc.y += 0.5;
-  }
-  // cellloc.y *= 0.5;
-  // cellloc += bands.xy;
-  // float cellI = cellloc.x + (cellloc.y * 4. * 13.);
-  // weft = hsv2rgb(vec3(cellI * 0.25, 0.5, 0.5));
-  float d = 10000.;
-  for (float i = 0.; i < 7.; i++) {
-    // i += bands.x;
-    vec2 ball_pos = vec2(noise2d(vec2(t + i * 20.)),
-                         noise2d(vec2(t + i * 200. + vec2(100.))));
-    ball_pos += vec2(sin(t * 10. + i), cos(t * 10. + i));
-    // d = cellloc.x - ;
-    float bd = length(cellloc * 0.1 - ball_pos * 1.0);
-    d = smin(d, bd, 7.5);
-    // d = min(d, bd);
-  }
-  // float n = noise3d(vec3(cellloc * 0.15 - vec2(0., -t * 0.90), t * 0.9) *
-  // 0.95);
-  weft = hsv2rgb(vec3(0.4, 0.8, 1.));
-  if (d > 0.4) {
-    weft *= 0.15;
-  } else if (d > 0.2) {
-    // weft *= 0.2;
-  }
-  cellloc += bands.yw;
-  cellloc.y += (t + bands.x) * 20.;
-  if (mod(cellloc.x + sin(cellloc.y * 0.5) * 4. + t * 2., 10.) < 7.) {
+    float l = luma(color);
+    float s = 0.1 + (floor(l * 2005.) / 2005.);
+    // color = hsv2rgb(vec3(tr.y / 5. + ((s - 0.5) * 0.5), s + 0.05, s));
 
-    // weft *= 0.25;
-  }
-  // if
-  if (max(ruv.x, ruv.y) > s * 1.5 && min(uv45.x, uv45.y) > s * 0.1) {
-    color = weft;
+    // if (10. > 0.1) {
+
+    // if (luma(color) < 0.3 + (sin(uv.x * 1000.) + cos(uv.y * 1000.)) * 0.1) {
+    if (luma(color) < 0.4 + noise3d(vec3(uv * 250., t * 0.1)) * 0.3) {
+      // color = max(color, color2);
+      // color = vec3(0.);
+    } else {
+      // color = vec3(1.0);
+      // color = hsv2rgb(vec3(t + (tr.y / 5.), 0.3, 0.9));
+    }
   }
   gl_FragColor.rgb = color;
   gl_FragColor.a = 1.0;
