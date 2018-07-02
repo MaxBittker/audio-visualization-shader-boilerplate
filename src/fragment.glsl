@@ -155,7 +155,7 @@ vec2 doModel(vec3 p) {
   // p -= vec3(g, g, 0.);
   // p += vec3(sin(t + p.y * 10.) * 0.1, 0., 0.);
   float r = g - 0.1;
-  float n1 = worley3D(p * m0 + vec3(t * m7), 1.0, false).x * m1;
+  float n1 = worley3D(p * m0 + vec3(t * m7), m3, false).x * m1;
   float n2 = n1 - m2 * (1.0 + (noise4d(vec4(p * m4, t)) * m5));
   // float d = sdPlane(p, normalize(vec4(0, 1.0 + r, 0, 1.0)));
   float d = length(p) - r * 1.2;
