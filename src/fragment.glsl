@@ -30,6 +30,7 @@ vec2 doModel(vec3 p);
 #pragma glslify: noise2d = require('glsl-noise/simplex/2d')
 #pragma glslify: noise3d = require('glsl-noise/simplex/3d')
 #pragma glslify: noise = require('glsl-fractal-brownian-noise/4d')
+#pragma glslify: worley2D = require(glsl-worley/worley2D.glsl)
 #pragma glslify: worley3D = require(glsl-worley/worley3D.glsl)
 #pragma glslify: noise4d = require('glsl-noise/simplex/4d')
 #pragma glslify: raytrace = require('glsl-raytrace', map = doModel, steps = 90)
@@ -149,16 +150,19 @@ float bolt2(vec3 pos) {
 
 vec2 doModel(vec3 p) {
   float g = 1.;
+  p.z += t * 5.;
   float g2 = g * 2.;
   // p *= 2.;
   // p = mod(p, vec3(g2, g2, 0.));
   // p -= vec3(g, g, 0.);
   // p += vec3(sin(t + p.y * 10.) * 0.1, 0., 0.);
   float r = g - 0.1;
-  float n1 = worley3D(p * m0 + vec3(t * m7), m3, false).x * m1;
-  float n2 = n1 - m2 * (1.0 + (noise4d(vec4(p * m4, t)) * m5));
-  // float d = sdPlane(p, normalize(vec4(0, 1.0 + r, 0, 1.0)));
-  float d = length(p) - r * 1.2;
+  float n1 = worley2D(p.xz * m0, sin(t), false).x * m1;
+  n1 = n1 * n1;
+  // n1 = min(n1, 1.0);
+  float n2 = n1 - m2 * 0.9;
+  float d = sdPlane(p, normalize(vec4(0, max(1.0 - (n1), 0.5), 0, 1.0)));
+  // float d = length(p) - r * 1.2;
   d = max(d, -n2);
   return vec2(d, n1);
   // // p += noise4d(vec4(p * 20., t)) * 0.01;
@@ -199,8 +203,8 @@ vec2 doModel(vec3 p) {
 vec3 lighting(vec3 pos, vec3 nor, vec3 ro, vec3 rd, float id) {
   float occ = calcAO(pos, nor);
 
-  vec3 dir1 = normalize(vec3(sin(t), cos(t), sin(t)));
-  vec3 col1 = hsv2rgb(vec3(0.9 * id * 5., 0.5, 1.0));
+  vec3 dir1 = normalize(vec3(sin(m7), cos(m7), sin(m7)));
+  vec3 col1 = hsv2rgb(vec3(0.4, 0.5, 1.0));
 
   // float grain = noise4d(vec4(nor * 80., t)) * 0.2;
 
@@ -230,8 +234,8 @@ void main() {
 
   vec3 ro, rd;
 
-  float rotation = t;
-  float height = 0.0;
+  float rotation = 0.;
+  float height = 1.9;
   float dist = 3.;
 
   camera(rotation, height, dist, resolution.xy, ro, rd);
@@ -251,11 +255,12 @@ void main() {
     // if (10. > 0.1) {
 
     // if (luma(color) < 0.3 + (sin(uv.x * 1000.) + cos(uv.y * 1000.)) * 0.1) {
-    if (luma(color) < 0.4 + noise3d(vec3(uv * 250., t * 0.1)) * 0.3) {
+    if (luma(color) <
+        0.4 + noise3d(vec3((nor.xz + pos.xz) * m2, t * 0.0)) * 0.3) {
       // color = max(color, color2);
-      // color = vec3(0.);
+      color = vec3(0.);
     } else {
-      // color = vec3(1.0);
+      color = vec3(1.0);
       // color = hsv2rgb(vec3(t + (tr.y / 5.), 0.3, 0.9));
     }
   }
