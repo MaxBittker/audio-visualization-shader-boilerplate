@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "./node_modules/.bin/shader-reload-cli index.js:bundle.js --no-debug --dir dist/ --cors"
+    "start": "./node_modules/.bin/shader-reload-cli index.js:bundle.js --dir dist/ --cors"
   },
   "author": "maxbittker <maxbittker@gmail.com> (maxbittker.github.io)",
   "license": "ISC",

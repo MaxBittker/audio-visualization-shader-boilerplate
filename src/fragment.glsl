@@ -150,54 +150,46 @@ float bolt2(vec3 pos) {
 
 vec2 doModel(vec3 p) {
   float g = 1.;
-  p.z += t * 5.;
+  // p.z += t * 5.;
   float g2 = g * 2.;
   // p *= 2.;
   // p = mod(p, vec3(g2, g2, 0.));
   // p -= vec3(g, g, 0.);
   // p += vec3(sin(t + p.y * 10.) * 0.1, 0., 0.);
-  float r = g - 0.1;
-  float n1 = worley2D(p.xz * m0, sin(t), false).x * m1;
-  n1 = n1 * n1;
-  // n1 = min(n1, 1.0);
-  float n2 = n1 - m2 * 0.9;
-  float d = sdPlane(p, normalize(vec4(0, max(1.0 - (n1), 0.5), 0, 1.0)));
-  // float d = length(p) - r * 1.2;
-  d = max(d, -n2);
-  return vec2(d, n1);
-  // // p += noise4d(vec4(p * 20., t)) * 0.01;
-  // p = rotateX(p, t);
-  // p = rotateZ(p, t);
-  // float b0 = bolt0(p);
-  // p = rotateX(p, t);
-  // float b1 = bolt1(p);
-  // p = rotateZ(p, t);
-  // float b2 = bolt2(p);
 
-  // // float d = 1000.;
-  // float id = 1.0;
+  // p += noise4d(vec4(p * m0, t)) * m1;
+  p = rotateX(p, t);
+  p = rotateZ(p, t);
+  float b0 = bolt0(p);
+  p = rotateX(p, t);
+  float b1 = bolt1(p);
+  p = rotateZ(p, t);
+  float b2 = bolt2(p);
 
-  // float f = mod(t * 10., 300.);
+  float d = 1000.;
+  float id = 1.0;
+
+  float f = mod(t * 10., 300.);
 
   // if (f > 140.) {
-  //   d = min(d, b0);
+  d = min(d, b0);
   // }
 
   // if (f < 160.) {
 
-  //   if (d > b1) {
-  //     id = 2.0;
-  //   }
-  //   d = min(d, b1);
+  if (d > b1) {
+    id = 2.0;
+  }
+  d = min(d, b1);
   // }
   // if (f < 40. || f > 260.) {
-  //   if (d > b2) {
-  //     id = 3.0;
-  //   }
-  //   d = min(d, b2);
+  if (d > b2) {
+    id = 3.0;
+  }
+  d = min(d, b2);
   // }
 
-  // return vec2(d, id);
+  return vec2(d, id);
 }
 
 vec3 lighting(vec3 pos, vec3 nor, vec3 ro, vec3 rd, float id) {
@@ -234,8 +226,8 @@ void main() {
 
   vec3 ro, rd;
 
-  float rotation = 0.;
-  float height = 1.9;
+  float rotation = m2;
+  float height = 0.;
   float dist = 3.;
 
   camera(rotation, height, dist, resolution.xy, ro, rd);
@@ -249,8 +241,9 @@ void main() {
     color = lighting(pos, nor, ro, rd, tr.y);
 
     float l = luma(color);
-    float s = 0.1 + (floor(l * 2005.) / 2005.);
-    // color = hsv2rgb(vec3(tr.y / 5. + ((s - 0.5) * 0.5), s + 0.05, s));
+    float ncolors = 15.;
+    float s = 0.1 + (floor(l * ncolors) / ncolors);
+    color = hsv2rgb(vec3(tr.y / 5. + ((s - 0.5) * 0.5), s + 0.05, s));
 
     // if (10. > 0.1) {
 
@@ -258,9 +251,9 @@ void main() {
     if (luma(color) <
         0.4 + noise3d(vec3((nor.xz + pos.xz) * m2, t * 0.0)) * 0.3) {
       // color = max(color, color2);
-      color = vec3(0.);
+      // color = vec3(0.);
     } else {
-      color = vec3(1.0);
+      // color = vec3(1.0);
       // color = hsv2rgb(vec3(t + (tr.y / 5.), 0.3, 0.9));
     }
   }
