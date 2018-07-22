@@ -66,6 +66,29 @@ float rand(vec2 n) {
     highp float sn= mod(dt,3.14);
     return fract(sin(sn) * c);
 }
+vec4 hexagon( vec2 p ) 
+{
+	vec2 q = vec2( p.x*2.0*0.5773503, p.y + p.x*0.5773503 );
+	
+	vec2 pi = floor(q);
+	vec2 pf = fract(q);
+
+	float v = mod(pi.x + pi.y, 3.0);
+
+	float ca = step(1.0,v);
+	float cb = step(2.0,v);
+	vec2  ma = step(pf.xy,pf.yx);
+	
+    // distance to borders
+	float e = dot( ma, 1.0-pf.yx + ca*(pf.x+pf.y-1.0) + cb*(pf.yx-2.0*pf.xy) );
+
+	// distance to center	
+	p = vec2( q.x + floor(0.5+p.y/1.5), 4.0*p.y/3.0 )*0.5 + 0.5;
+	float f = length( (fract(p) - 0.5)*vec2(1.0,0.85) );		
+	
+	return vec4( pi + ca - cb*ma, e, f );
+}
+
 // clang-format on
 vec2 pixel = vec2(1.0) / resolution;
 
@@ -83,15 +106,23 @@ vec3 opTwist(vec3 p) {
 vec2 doModel(vec3 pos) {
   float g = 0.2;
   float g2 = g * 2.;
+  vec4 hexc = hexagon((pos.yx + vec2(g)) / g2 * 6. / 4.);
+
+  if (mod(pos.x * 0.5, g2) < 0.5 * g2) {
+    pos.y += g;
+  }
   // p *= 2.;
   vec3 p = mod(pos, vec3(g2, g2, 0.));
   p -= vec3(g, g, 0.);
   vec2 ci = floor(pos.xy / g2);
-  float id = floor(rand(ci) * 7.);
+  // ci = hexc.rg;
+  float id = floor(rand(ci) * 8.);
 
   // p += vec3(sin(t + p.y * 10.) * 0.1, 0., 0.);
   float pad = 0.01;
   float d = 1000.;
+  p = rotateX(p, t + id * 100.);
+  // p = vec3(ci, p.z);
   float box = sdBox(p, vec3(g - pad, g - pad, g - pad * 2.));
   float sphere = length(p) - g + pad;
   float dcylinder = sdCappedCylinder(p.xyz, vec2(g - pad * 3., g - pad));
@@ -101,27 +132,35 @@ vec2 doModel(vec3 pos) {
       sdCappedCylinder(p.xzy - vec3(g, 0., g), vec2(g2 - pad * 3., g - pad));
   float revbfcylinder = max(box, -bfcylinder);
   bfcylinder = max(box, bfcylinder);
+
+  float hexf = sdHexPrism(p, vec2(g - pad, 0.05));
+  float hex = sdHexPrism(p.zyx, vec2(g - pad));
+  // vec3 dd = abs(vec3(ci, p.z)) - g;
+  // hexf = min(max(dd.x, max(dd.y, dd.z)), 0.0) + length(max(dd, 0.0));
+  // hexf = length(max(abs(vec3(ci, p.z)) - 0.1, 0.));
   d = box;
+  // d = fcylinder;
+  d = hexf;
   if (id > 0.01) {
-    d = sphere;
+    // d = sphere;
   }
   if (id > 1.01) {
-    d = fcylinder;
+    // d = fcylinder;
   }
   if (id > 2.01) {
-    d = scylinder;
+    // d = scylinder;
   }
   if (id > 3.01) {
     d = dcylinder;
   }
   if (id > 4.01) {
-    d = max(box, -fcylinder);
+    // d = max(box, -fcylinder);
   }
   if (id > 5.01) {
-    d = bfcylinder;
+    // d = bfcylinder;
   }
   if (id > 6.01) {
-    d = revbfcylinder;
+    // d = revbfcylinder;
   }
   return vec2(d, randb(ci * 200.));
 }
@@ -149,7 +188,7 @@ vec3 lighting(vec3 pos, vec3 nor, vec3 ro, vec3 rd, float id) {
   vec3 spc2 = col2 * gauss(dir2, -rd, nor, 0.15) * 0.1;
 
   // return vec3(0.01) + (dif1 + spc1 + ((dif2 + spc2) * occ));
-  return vec3(0.01) + (dif1 + spc1 + ((dif2 + spc2)));
+  return vec3(0.1) + (dif1 + spc1 + ((dif2 + spc2)));
 }
 
 void main() {
@@ -179,18 +218,19 @@ void main() {
     float l = luma(color);
     float ncolors = m3;
     float s = 0.1 + (floor(l * ncolors) / ncolors);
-    color = hsv2rgb(vec3(tr.y / m0 + ((s - 0.5) * 0.5), s + 0.015, s + 0.01));
+    color = hsv2rgb(
+        vec3(0.5 * (tr.y / 0.01) + ((s - 0.5) * 0.5), s + 0.015, s + 0.01));
 
     // if (10. > 0.1) {
 
     // if (luma(color) < 0.3 + (sin(uv.x * 1000.) + cos(uv.y * 1000.)) * 0.1) {
     if (luma(color) < 0.4 + noise3d(vec3(pos.xyz) * m2 * 20.) * 0.3) {
       // color = max(color, color2);
-      // color = vec3(0.);
+      color = vec3(0.);
       // color *= 0.2;
     } else {
       // color *= 1.2;
-      // color = vec3(1.0);
+      color = vec3(1.0);
       // color = hsv2rgb(vec3(t + (tr.y / 5.), 0.3, 0.9));
     }
   }
